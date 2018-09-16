@@ -1,5 +1,7 @@
 //! `entry` module. Contains all code related to data entries.
 
+use std::ops::{Add, Sub};
+
 /// A data entry.
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum DataEntry {
@@ -49,6 +51,132 @@ impl DataEntry {
             DataEntry::Double(_)    => "f64",
             DataEntry::Boolean(_)   => "bool",
             DataEntry::Character(_) => "char",
+        }
+    }
+}
+
+impl Add for DataEntry {
+    type Output = DataEntry;
+
+    fn add(self, other: DataEntry) -> Self::Output {
+        match self {
+            DataEntry::Integer(int1)    => {
+                match other {
+                    DataEntry::Integer(int2)    => DataEntry::Integer(int1 + int2),
+                    DataEntry::UInteger(int2)   => DataEntry::Long(int1 as i64 + int2 as i64),
+                    DataEntry::Long(int2)       => DataEntry::Long(int1 as i64 + int2),
+                    DataEntry::ULong(int2)      => DataEntry::Double(int1 as f64 + int2 as f64),
+                    DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 + f2),
+                    DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 + f2),
+                    DataEntry::Boolean(b2)      => DataEntry::Integer(int1 + b2 as i32),
+                    DataEntry::Character(ch1)   => DataEntry::Text(int1.to_string() + &ch1.to_string()),
+                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2)
+                }
+            },
+            DataEntry::UInteger(int1)   => {
+                match other {
+                    DataEntry::Integer(int2)    => DataEntry::Long(int1 as i64 + int2 as i64),
+                    DataEntry::UInteger(int2)   => DataEntry::UInteger(int1 + int2),
+                    DataEntry::Long(int2)       => DataEntry::Long(int1 as i64 + int2),
+                    DataEntry::ULong(int2)      => DataEntry::Double(int1 as f64 + int2 as f64),
+                    DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 + f2),
+                    DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 + f2),
+                    DataEntry::Boolean(b2)      => DataEntry::UInteger(int1 + b2 as u32),
+                    DataEntry::Character(ch1)   => DataEntry::Text(int1.to_string() + &ch1.to_string()),
+                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2)
+                }
+            },
+            DataEntry::Long(int1)       => {
+                match other {
+                    DataEntry::Integer(int2)    => DataEntry::Long(int1 as i64 + int2 as i64),
+                    DataEntry::UInteger(int2)   => DataEntry::Long(int1 as i64 + int2 as i64),
+                    DataEntry::Long(int2)       => DataEntry::Long(int1 + int2),
+                    DataEntry::ULong(int2)      => DataEntry::Double(int1 as f64 + int2 as f64),
+                    DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 + f2),
+                    DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 + f2),
+                    DataEntry::Boolean(b2)      => DataEntry::Long(int1 + b2 as i64),
+                    DataEntry::Character(ch1)   => DataEntry::Text(int1.to_string() + &ch1.to_string()),
+                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2)
+                }
+            },
+            DataEntry::ULong(int1)      => {
+                match other {
+                    DataEntry::Integer(int2)    => DataEntry::Double(int1 as f64 + int2 as f64),
+                    DataEntry::UInteger(int2)   => DataEntry::ULong(int1 + int2 as u64),
+                    DataEntry::Long(int2)       => DataEntry::Double(int1 as f64 + int2 as f64),
+                    DataEntry::ULong(int2)      => DataEntry::ULong(int1 + int2),
+                    DataEntry::Float(f2)        => DataEntry::Double(int1 as f64 + f2 as f64),
+                    DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 + f2),
+                    DataEntry::Boolean(b2)      => DataEntry::ULong(int1 + b2 as u64),
+                    DataEntry::Character(ch1)   => DataEntry::Text(int1.to_string() + &ch1.to_string()),
+                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2)
+                }
+            },
+            DataEntry::Float(f1)        => {
+                match other {
+                    DataEntry::Integer(int2)    => DataEntry::Float(f1 + int2 as f32),
+                    DataEntry::UInteger(int2)   => DataEntry::Float(f1 + int2 as f32),
+                    DataEntry::Long(int2)       => DataEntry::Double(f1 as f64 + int2 as f64),
+                    DataEntry::ULong(int2)      => DataEntry::Double(f1 as f64 + int2 as f64),
+                    DataEntry::Float(f2)        => DataEntry::Float(f1 + f2),
+                    DataEntry::Double(f2)       => DataEntry::Double(f1 as f64 + f2),
+                    DataEntry::Boolean(b2)      => DataEntry::Float(f1 + b2 as u8 as f32),
+                    DataEntry::Character(ch1)   => DataEntry::Text(f1.to_string() + &ch1.to_string()),
+                    DataEntry::Text(txt2)       => DataEntry::Text(f1.to_string() + &txt2)
+                }
+            },
+            DataEntry::Double(f1)       => {
+                match other {
+                    DataEntry::Integer(int2)    => DataEntry::Double(f1 + int2 as f64),
+                    DataEntry::UInteger(int2)   => DataEntry::Double(f1 + int2 as f64),
+                    DataEntry::Long(int2)       => DataEntry::Double(f1 + int2 as f64),
+                    DataEntry::ULong(int2)      => DataEntry::Double(f1 + int2 as f64),
+                    DataEntry::Float(f2)        => DataEntry::Double(f1 + f2 as f64),
+                    DataEntry::Double(f2)       => DataEntry::Double(f1 + f2),
+                    DataEntry::Boolean(b2)      => DataEntry::Double(f1 + b2 as u8 as f64),
+                    DataEntry::Character(ch1)   => DataEntry::Text(f1.to_string() + &ch1.to_string()),
+                    DataEntry::Text(txt2)       => DataEntry::Text(f1.to_string() + &txt2)
+                }
+            },
+            DataEntry::Boolean(b1)      => {
+                match other {
+                    DataEntry::Integer(int2)    => DataEntry::Integer(b1 as i32 + int2),
+                    DataEntry::UInteger(int2)   => DataEntry::UInteger(b1 as u32 + int2),
+                    DataEntry::Long(int2)       => DataEntry::Long(b1 as i64 + int2),
+                    DataEntry::ULong(int2)      => DataEntry::ULong(b1 as u64 + int2),
+                    DataEntry::Float(f2)        => DataEntry::Float(b1 as u8 as f32 + f2),
+                    DataEntry::Double(f2)       => DataEntry::Double(b1 as u8 as f64 + f2),
+                    DataEntry::Boolean(b2)      => DataEntry::Integer(b1 as i32 + b2 as i32),
+                    DataEntry::Character(ch1)   => DataEntry::Text(b1.to_string() + &ch1.to_string()),
+                    DataEntry::Text(txt2)       => DataEntry::Text(b1.to_string() + &txt2)
+                }
+            },
+            DataEntry::Character(ch1)   => {
+                match other {
+                    DataEntry::Integer(int2)    => DataEntry::Text(ch1.to_string() + &int2.to_string()),
+                    DataEntry::UInteger(int2)   => DataEntry::Text(ch1.to_string() + &int2.to_string()),
+                    DataEntry::Long(int2)       => DataEntry::Text(ch1.to_string() + &int2.to_string()),
+                    DataEntry::ULong(int2)      => DataEntry::Text(ch1.to_string() + &int2.to_string()),
+                    DataEntry::Float(f2)        => DataEntry::Text(ch1.to_string() + &f2.to_string()),
+                    DataEntry::Double(f2)       => DataEntry::Text(ch1.to_string() + &f2.to_string()),
+                    DataEntry::Boolean(b2)      => DataEntry::Text(ch1.to_string() + &b2.to_string()),
+                    DataEntry::Character(ch1)   => DataEntry::Text(ch1.to_string() + &ch1.to_string()),
+                    DataEntry::Text(txt2)       => DataEntry::Text(ch1.to_string() + &txt2)
+                }
+            },
+            DataEntry::Text(txt1)       => {
+                match other {
+                    DataEntry::Integer(int2)    => DataEntry::Text(txt1 + &int2.to_string()),
+                    DataEntry::UInteger(int2)   => DataEntry::Text(txt1 + &int2.to_string()),
+                    DataEntry::Long(int2)       => DataEntry::Text(txt1 + &int2.to_string()),
+                    DataEntry::ULong(int2)      => DataEntry::Text(txt1 + &int2.to_string()),
+                    DataEntry::Float(f2)        => DataEntry::Text(txt1 + &f2.to_string()),
+                    DataEntry::Double(f2)       => DataEntry::Text(txt1 + &f2.to_string()),
+                    DataEntry::Boolean(b2)      => DataEntry::Text(txt1 + &b2.to_string()),
+                    DataEntry::Character(ch1)   => DataEntry::Text(txt1 + &ch1.to_string()),
+                    DataEntry::Text(txt2)       => DataEntry::Text(txt1 + &txt2)
+                }
+            }
         }
     }
 }
@@ -111,6 +239,41 @@ mod tests {
 
         let entry = DataEntry::Character('a');
         assert_eq!("char", entry.get_internal_type());
+    }
+
+    #[test]
+    fn addition() {
+        let a = DataEntry::Integer(-34);
+        let b = DataEntry::Integer(12);
+        assert_eq!(DataEntry::Integer(-22), a + b);
+
+        let a = DataEntry::Integer(-34);
+        let b = DataEntry::Text("hello world".to_owned());
+        assert_eq!(DataEntry::Text("-34hello world".to_owned()), a + b);
+
+        let a = DataEntry::Double(-100_000.000_1);
+        let b = DataEntry::Long(-12);
+        assert_eq!(DataEntry::Double(-100_012.000_1), a + b);
+
+        let a = DataEntry::Character('x');
+        let b = DataEntry::Boolean(false);
+        assert_eq!(DataEntry::Text("xfalse".to_owned()), a + b);
+
+        let a = DataEntry::ULong(123_456_789);
+        let b = DataEntry::Boolean(true);
+        assert_eq!(DataEntry::ULong(123_456_790), a + b);
+
+        let a = DataEntry::Boolean(false);
+        let b = DataEntry::Double(234_567.120_345);
+        assert_eq!(DataEntry::Double(234_567.120_345), a + b);
+
+        let a = DataEntry::Integer(-23);
+        let b = DataEntry::ULong(234_567);
+        assert_eq!(DataEntry::Double(234_544 as f64), a + b);
+
+        let a = DataEntry::Boolean(false);
+        let b = DataEntry::Boolean(true);
+        assert_eq!(DataEntry::Integer(1), a + b);
     }
 
     #[test]
