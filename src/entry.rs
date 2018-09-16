@@ -22,9 +22,7 @@ pub enum DataEntry {
     /// A boolean entry.
     Boolean(bool),
     /// A character entry.
-    Character(char),
-    /// Invalid entry.
-    Invalid(String)
+    Character(char)
 }
 
 impl DataEntry {
@@ -39,7 +37,6 @@ impl DataEntry {
     /// - `f64`,
     /// - `bool`,
     /// - `char`.
-    /// - invalid.
     ///
     /// # Returns
     /// One of the above as a string reference.
@@ -54,7 +51,6 @@ impl DataEntry {
             DataEntry::Double(_)    => "f64",
             DataEntry::Boolean(_)   => "bool",
             DataEntry::Character(_) => "char",
-            DataEntry::Invalid(_)   => "invalid",
         }
     }
 }
@@ -74,8 +70,7 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 + f2),
                     DataEntry::Boolean(b2)      => DataEntry::Integer(int1 + b2 as i32),
                     DataEntry::Character(ch1)   => DataEntry::Text(int1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2)
                 }
             },
             DataEntry::UInteger(int1)   => {
@@ -88,8 +83,7 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 + f2),
                     DataEntry::Boolean(b2)      => DataEntry::UInteger(int1 + b2 as u32),
                     DataEntry::Character(ch1)   => DataEntry::Text(int1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2)
                 }
             },
             DataEntry::Long(int1)       => {
@@ -102,8 +96,7 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 + f2),
                     DataEntry::Boolean(b2)      => DataEntry::Long(int1 + b2 as i64),
                     DataEntry::Character(ch1)   => DataEntry::Text(int1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2)
                 }
             },
             DataEntry::ULong(int1)      => {
@@ -116,8 +109,7 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 + f2),
                     DataEntry::Boolean(b2)      => DataEntry::ULong(int1 + b2 as u64),
                     DataEntry::Character(ch1)   => DataEntry::Text(int1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2)
                 }
             },
             DataEntry::Float(f1)        => {
@@ -130,8 +122,7 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(f1 as f64 + f2),
                     DataEntry::Boolean(b2)      => DataEntry::Float(f1 + b2 as u8 as f32),
                     DataEntry::Character(ch1)   => DataEntry::Text(f1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(f1.to_string() + &txt2),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Text(txt2)       => DataEntry::Text(f1.to_string() + &txt2)
                 }
             },
             DataEntry::Double(f1)       => {
@@ -144,8 +135,7 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(f1 + f2),
                     DataEntry::Boolean(b2)      => DataEntry::Double(f1 + b2 as u8 as f64),
                     DataEntry::Character(ch1)   => DataEntry::Text(f1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(f1.to_string() + &txt2),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Text(txt2)       => DataEntry::Text(f1.to_string() + &txt2)
                 }
             },
             DataEntry::Boolean(b1)      => {
@@ -158,8 +148,7 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(b1 as u8 as f64 + f2),
                     DataEntry::Boolean(b2)      => DataEntry::Integer(b1 as i32 + b2 as i32),
                     DataEntry::Character(ch1)   => DataEntry::Text(b1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(b1.to_string() + &txt2),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Text(txt2)       => DataEntry::Text(b1.to_string() + &txt2)
                 }
             },
             DataEntry::Character(ch1)   => {
@@ -172,8 +161,7 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Text(ch1.to_string() + &f2.to_string()),
                     DataEntry::Boolean(b2)      => DataEntry::Text(ch1.to_string() + &b2.to_string()),
                     DataEntry::Character(ch1)   => DataEntry::Text(ch1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(ch1.to_string() + &txt2),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Text(txt2)       => DataEntry::Text(ch1.to_string() + &txt2)
                 }
             },
             DataEntry::Text(txt1)       => {
@@ -186,11 +174,9 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Text(txt1 + &f2.to_string()),
                     DataEntry::Boolean(b2)      => DataEntry::Text(txt1 + &b2.to_string()),
                     DataEntry::Character(ch1)   => DataEntry::Text(txt1 + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(txt1 + &txt2),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Text(txt2)       => DataEntry::Text(txt1 + &txt2)
                 }
-            },
-            DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+            }
         }
     }
 }
@@ -209,9 +195,8 @@ impl Sub for DataEntry {
                     DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 - f2),
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 - f2),
                     DataEntry::Boolean(b2)      => DataEntry::Integer(int1 - b2 as i32),
-                    DataEntry::Character(ch1)   => DataEntry::Invalid("subtracting characters is invalid".to_owned()),
-                    DataEntry::Text(txt2)       => DataEntry::Invalid("subtracting strings is invalid".to_owned()),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Character(_)     => panic!("subtracting characters is invalid"),
+                    DataEntry::Text(_)          => panic!("subtracting strings is invalid")
                 }
             },
             DataEntry::UInteger(int1)   => {
@@ -223,9 +208,8 @@ impl Sub for DataEntry {
                     DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 - f2),
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 - f2),
                     DataEntry::Boolean(b2)      => DataEntry::Integer(int1 as i32 - b2 as i32),
-                    DataEntry::Character(ch1)   => DataEntry::Invalid("subtracting characters is invalid".to_owned()),
-                    DataEntry::Text(txt2)       => DataEntry::Invalid("subtracting strings is invalid".to_owned()),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Character(_)     => panic!("subtracting characters is invalid"),
+                    DataEntry::Text(_)          => panic!("subtracting strings is invalid")
                 }
             },
             DataEntry::Long(int1)       => {
@@ -237,9 +221,8 @@ impl Sub for DataEntry {
                     DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 - f2),
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 - f2),
                     DataEntry::Boolean(b2)      => DataEntry::Long(int1 - b2 as i64),
-                    DataEntry::Character(ch1)   => DataEntry::Invalid("subtracting characters is invalid".to_owned()),
-                    DataEntry::Text(txt2)       => DataEntry::Invalid("subtracting strings is invalid".to_owned()),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Character(_)     => panic!("subtracting characters is invalid"),
+                    DataEntry::Text(_)          => panic!("subtracting strings is invalid")
                 }
             },
             DataEntry::ULong(int1)      => {
@@ -251,9 +234,8 @@ impl Sub for DataEntry {
                     DataEntry::Float(f2)        => DataEntry::Double(int1 as f64 - f2 as f64),
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 - f2),
                     DataEntry::Boolean(b2)      => DataEntry::Double(int1 as f64 - b2 as u8 as f64),
-                    DataEntry::Character(ch1)   => DataEntry::Invalid("subtracting characters is invalid".to_owned()),
-                    DataEntry::Text(txt2)       => DataEntry::Invalid("subtracting strings is invalid".to_owned()),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Character(_)     => panic!("subtracting characters is invalid"),
+                    DataEntry::Text(_)          => panic!("subtracting strings is invalid")
                 }
             },
             DataEntry::Float(f1)        => {
@@ -265,9 +247,8 @@ impl Sub for DataEntry {
                     DataEntry::Float(f2)        => DataEntry::Float(f1 - f2),
                     DataEntry::Double(f2)       => DataEntry::Double(f1 as f64 - f2),
                     DataEntry::Boolean(b2)      => DataEntry::Float(f1 - b2 as u8 as f32),
-                    DataEntry::Character(ch1)   => DataEntry::Invalid("subtracting characters is invalid".to_owned()),
-                    DataEntry::Text(txt2)       => DataEntry::Invalid("subtracting strings is invalid".to_owned()),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Character(_)     => panic!("subtracting characters is invalid"),
+                    DataEntry::Text(_)          => panic!("subtracting strings is invalid")
                 }
             },
             DataEntry::Double(f1)       => {
@@ -279,9 +260,8 @@ impl Sub for DataEntry {
                     DataEntry::Float(f2)        => DataEntry::Double(f1 - f2 as f64),
                     DataEntry::Double(f2)       => DataEntry::Double(f1 - f2),
                     DataEntry::Boolean(b2)      => DataEntry::Double(f1 - b2 as u8 as f64),
-                    DataEntry::Character(ch1)   => DataEntry::Invalid("subtracting characters is invalid".to_owned()),
-                    DataEntry::Text(txt2)       => DataEntry::Invalid("subtracting strings is invalid".to_owned()),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Character(_)     => panic!("subtracting characters is invalid"),
+                    DataEntry::Text(_)          => panic!("subtracting strings is invalid")
                 }
             },
             DataEntry::Boolean(b1)      => {
@@ -293,22 +273,12 @@ impl Sub for DataEntry {
                     DataEntry::Float(f2)        => DataEntry::Float(b1 as u8 as f32 - f2),
                     DataEntry::Double(f2)       => DataEntry::Double(b1 as u8 as f64 - f2),
                     DataEntry::Boolean(b2)      => DataEntry::Integer(b1 as i32 - b2 as i32),
-                    DataEntry::Character(ch1)   => DataEntry::Invalid("subtracting characters is invalid".to_owned()),
-                    DataEntry::Text(txt2)       => DataEntry::Invalid("subtracting strings is invalid".to_owned()),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Character(_)     => panic!("subtracting characters is invalid"),
+                    DataEntry::Text(_)          => panic!("subtracting strings is invalid")
                 }
             },
-            DataEntry::Character(ch1)   => {
-                match other {
-                    _                           => DataEntry::Invalid("subtracting from characters is invalid".to_owned())
-                }
-            },
-            DataEntry::Text(txt1)       => {
-                match other {
-                    _                           => DataEntry::Invalid("subtracting from strings is invalid".to_owned())
-                }
-            },
-            DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+            DataEntry::Character(_)     => panic!("subtracting from characters is invalid"),
+            DataEntry::Text(_)          => panic!("subtracting from strings is invalid")
         }
     }
 }
@@ -340,8 +310,7 @@ impl Mul for DataEntry {
                         } else {
                             DataEntry::Text("".to_owned())
                         }
-                    },
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    }
                 }
             },
             DataEntry::UInteger(int1)   => {
@@ -354,8 +323,7 @@ impl Mul for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 * f2),
                     DataEntry::Boolean(b2)      => DataEntry::Integer(int1 as i32 * b2 as i32),
                     DataEntry::Character(ch1)   => DataEntry::Text(ch1.to_string().repeat(int1 as usize)),
-                    DataEntry::Text(txt2)       => DataEntry::Text(txt2.repeat(int1 as usize)),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Text(txt2)       => DataEntry::Text(txt2.repeat(int1 as usize))
                 }
             },
             DataEntry::Long(int1)       => {
@@ -380,8 +348,7 @@ impl Mul for DataEntry {
                         } else {
                             DataEntry::Text("".to_owned())
                         }
-                    },
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    }
                 }
             },
             DataEntry::ULong(int1)      => {
@@ -389,13 +356,12 @@ impl Mul for DataEntry {
                     DataEntry::Integer(int2)    => DataEntry::Double(int1 as f64 * int2 as f64),
                     DataEntry::UInteger(int2)   => DataEntry::ULong(int1 * int2 as u64),
                     DataEntry::Long(int2)       => DataEntry::Double(int1 as f64 * int2 as f64),
-                    DataEntry::ULong(int2)      => DataEntry::ULong(int1 - int2),
+                    DataEntry::ULong(int2)      => DataEntry::ULong(int1 * int2),
                     DataEntry::Float(f2)        => DataEntry::Double(int1 as f64 * f2 as f64),
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 * f2),
                     DataEntry::Boolean(b2)      => DataEntry::Double(int1 as f64 * b2 as u8 as f64),
                     DataEntry::Character(ch1)   => DataEntry::Text(ch1.to_string().repeat(int1 as usize)),
-                    DataEntry::Text(txt2)       => DataEntry::Text(txt2.repeat(int1 as usize)),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Text(txt2)       => DataEntry::Text(txt2.repeat(int1 as usize))
                 }
             },
             DataEntry::Float(f1)        => {
@@ -420,8 +386,7 @@ impl Mul for DataEntry {
                         } else {
                             DataEntry::Text("".to_owned())
                         }
-                    },
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    }
                 }
             },
             DataEntry::Double(f1)       => {
@@ -446,8 +411,7 @@ impl Mul for DataEntry {
                         } else {
                             DataEntry::Text("".to_owned())
                         }
-                    },
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    }
                 }
             },
             DataEntry::Boolean(b1)      => {
@@ -460,8 +424,7 @@ impl Mul for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(b1 as u8 as f64 * f2),
                     DataEntry::Boolean(b2)      => DataEntry::Integer(b1 as i32 * b2 as i32),
                     DataEntry::Character(ch1)   => DataEntry::Text(ch1.to_string().repeat(b1 as usize)),
-                    DataEntry::Text(txt2)       => DataEntry::Text(txt2.repeat(b1 as usize)),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Text(txt2)       => DataEntry::Text(txt2.repeat(b1 as usize))
                 }
             },
             DataEntry::Character(ch1)   => {
@@ -473,7 +436,6 @@ impl Mul for DataEntry {
                             DataEntry::Text("".to_owned())
                         }
                     },
-                    DataEntry::Integer(int2)    => DataEntry::Text(ch1.to_string().repeat(int2 as usize)),
                     DataEntry::UInteger(int2)   => DataEntry::Text(ch1.to_string().repeat(int2 as usize)),
                     DataEntry::Long(int2)       => {
                         if int2 >= 0i64 {
@@ -498,9 +460,8 @@ impl Mul for DataEntry {
                         }
                     },
                     DataEntry::Boolean(b2)      => DataEntry::Text(ch1.to_string().repeat(b2 as usize)),
-                    DataEntry::Character(_)     => DataEntry::Invalid("mutliplying a character with another is invalid".to_owned()),
-                    DataEntry::Text(_)          => DataEntry::Invalid("multiplying a character with a string is invalid".to_owned()),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Character(_)     => panic!("mutliplying a character with another is invalid"),
+                    DataEntry::Text(_)          => panic!("multiplying a character with a string is invalid")
                 }
             },
             DataEntry::Text(txt1)       => {
@@ -536,12 +497,112 @@ impl Mul for DataEntry {
                         }
                     },
                     DataEntry::Boolean(b2)      => DataEntry::Text(txt1.repeat(b2 as usize)),
-                    DataEntry::Character(_)     => DataEntry::Invalid("mutliplying a string with a character is invalid".to_owned()),
-                    DataEntry::Text(_)          => DataEntry::Invalid("multiplying a string with another is invalid".to_owned()),
-                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                    DataEntry::Character(_)     => panic!("mutliplying a string with a character is invalid"),
+                    DataEntry::Text(_)          => panic!("multiplying a string with another is invalid")
+                }
+            }
+        }
+    }
+}
+
+impl Div for DataEntry {
+    type Output = DataEntry;
+
+    fn div(self, rhs: DataEntry) -> Self::Output {
+        match self {
+            DataEntry::Integer(int1)    => {
+                match rhs {
+                    DataEntry::Integer(int2)    => DataEntry::Integer(int1 / int2),
+                    DataEntry::UInteger(int2)   => DataEntry::Long(int1 as i64 / int2 as i64),
+                    DataEntry::Long(int2)       => DataEntry::Long(int1 as i64 / int2),
+                    DataEntry::ULong(int2)      => DataEntry::Double(int1 as f64 / int2 as f64),
+                    DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 / f2),
+                    DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 / f2),
+                    DataEntry::Boolean(_)       => panic!("dividing by boolean is invalid"),
+                    DataEntry::Character(_)     => panic!("dividing by character is invalid"),
+                    DataEntry::Text(_)          => panic!("dividing by string is invalid")
                 }
             },
-            DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+            DataEntry::UInteger(int1)   => {
+                match rhs {
+                    DataEntry::Integer(int2)    => DataEntry::Long(int1 as i64 / int2 as i64),
+                    DataEntry::UInteger(int2)   => DataEntry::UInteger(int1 / int2),
+                    DataEntry::Long(int2)       => DataEntry::Long(int1 as i64 / int2),
+                    DataEntry::ULong(int2)      => DataEntry::ULong(int1 as u64 / int2),
+                    DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 / f2),
+                    DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 / f2),
+                    DataEntry::Boolean(_)       => panic!("dividing by boolean is invalid"),
+                    DataEntry::Character(_)     => panic!("dividing by character is invalid"),
+                    DataEntry::Text(_)          => panic!("dividing by string is invalid")
+                }
+            },
+            DataEntry::Long(int1)       => {
+                match rhs {
+                    DataEntry::Integer(int2)    => DataEntry::Long(int1 as i64 / int2 as i64),
+                    DataEntry::UInteger(int2)   => DataEntry::Long(int1 as i64 / int2 as i64),
+                    DataEntry::Long(int2)       => DataEntry::Long(int1 / int2),
+                    DataEntry::ULong(int2)      => DataEntry::Double(int1 as f64 / int2 as f64),
+                    DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 / f2),
+                    DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 / f2),
+                    DataEntry::Boolean(_)       => panic!("dividing by boolean is invalid"),
+                    DataEntry::Character(_)     => panic!("dividing by character is invalid"),
+                    DataEntry::Text(_)          => panic!("dividing by string is invalid")
+                }
+            },
+            DataEntry::ULong(int1)      => {
+                match rhs {
+                    DataEntry::Integer(int2)    => DataEntry::Double(int1 as f64 / int2 as f64),
+                    DataEntry::UInteger(int2)   => DataEntry::ULong(int1 / int2 as u64),
+                    DataEntry::Long(int2)       => DataEntry::Double(int1 as f64 / int2 as f64),
+                    DataEntry::ULong(int2)      => DataEntry::ULong(int1 / int2),
+                    DataEntry::Float(f2)        => DataEntry::Double(int1 as f64 / f2 as f64),
+                    DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 / f2),
+                    DataEntry::Boolean(_)       => panic!("dividing by boolean is invalid"),
+                    DataEntry::Character(_)     => panic!("dividing by character is invalid"),
+                    DataEntry::Text(_)          => panic!("dividing by string is invalid")
+                }
+            },
+            DataEntry::Float(f1)        => {
+                match rhs {
+                    DataEntry::Integer(int2)    => DataEntry::Float(f1 / int2 as f32),
+                    DataEntry::UInteger(int2)   => DataEntry::Float(f1 / int2 as f32),
+                    DataEntry::Long(int2)       => DataEntry::Double(f1 as f64 / int2 as f64),
+                    DataEntry::ULong(int2)      => DataEntry::Double(f1 as f64 / int2 as f64),
+                    DataEntry::Float(f2)        => DataEntry::Float(f1 / f2),
+                    DataEntry::Double(f2)       => DataEntry::Double(f1 as f64 / f2),
+                    DataEntry::Boolean(_)       => panic!("dividing by boolean is invalid"),
+                    DataEntry::Character(_)     => panic!("dividing by character is invalid"),
+                    DataEntry::Text(_)          => panic!("dividing by string is invalid")
+                }
+            },
+            DataEntry::Double(f1)       => {
+                match rhs {
+                    DataEntry::Integer(int2)    => DataEntry::Double(f1 / int2 as f64),
+                    DataEntry::UInteger(int2)   => DataEntry::Double(f1 / int2 as f64),
+                    DataEntry::Long(int2)       => DataEntry::Double(f1 / int2 as f64),
+                    DataEntry::ULong(int2)      => DataEntry::Double(f1 / int2 as f64),
+                    DataEntry::Float(f2)        => DataEntry::Double(f1 / f2 as f64),
+                    DataEntry::Double(f2)       => DataEntry::Double(f1 / f2),
+                    DataEntry::Boolean(_)       => panic!("dividing by boolean is invalid"),
+                    DataEntry::Character(_)     => panic!("dividing by character is invalid"),
+                    DataEntry::Text(_)          => panic!("dividing by string is invalid")
+                }
+            },
+            DataEntry::Boolean(b1)      => {
+                match rhs {
+                    DataEntry::Integer(int2)    => DataEntry::Integer(b1 as i32 / int2),
+                    DataEntry::UInteger(int2)   => DataEntry::UInteger(b1 as u32 / int2),
+                    DataEntry::Long(int2)       => DataEntry::Long(b1 as i64 / int2),
+                    DataEntry::ULong(int2)      => DataEntry::ULong(b1 as u64 / int2),
+                    DataEntry::Float(f2)        => DataEntry::Float(b1 as u8 as f32 / f2),
+                    DataEntry::Double(f2)       => DataEntry::Double(b1 as u8 as f64 / f2),
+                    DataEntry::Boolean(_)       => panic!("dividing by boolean is invalid"),
+                    DataEntry::Character(_)     => panic!("dividing by character is invalid"),
+                    DataEntry::Text(_)          => panic!("dividing by string is invalid")
+                }
+            },
+            DataEntry::Character(_)     => panic!("dividing characters is invalid"),
+            DataEntry::Text(_)          => panic!("dividing strings is invalid")
         }
     }
 }
@@ -567,9 +628,7 @@ pub enum DataType {
     /// Boolean
     Boolean,
     /// Character
-    Character,
-    /// Invalid
-    Invalid
+    Character
 }
 
 
@@ -606,9 +665,6 @@ mod tests {
 
         let entry = DataEntry::Character('a');
         assert_eq!("char", entry.internal_type());
-
-        let entry = DataEntry::Invalid("Some error explanation".to_owned());
-        assert_eq!("invalid", entry.internal_type());
     }
 
     #[test]
@@ -639,15 +695,11 @@ mod tests {
 
         let a = DataEntry::Integer(-23);
         let b = DataEntry::ULong(234_567);
-        assert_eq!(DataEntry::Double(234_544 as f64), a + b);
+        assert_eq!(DataEntry::Double(234_544f64), a + b);
 
         let a = DataEntry::Boolean(false);
         let b = DataEntry::Boolean(true);
         assert_eq!(DataEntry::Integer(1), a + b);
-
-        let a = DataEntry::Invalid("Some error explanation".to_owned());
-        let b = DataEntry::Integer(123);
-        assert_eq!(DataEntry::Invalid("Some error explanation".to_owned()), a + b);
     }
 
     #[test]
@@ -656,21 +708,13 @@ mod tests {
         let b = DataEntry::Integer(12);
         assert_eq!(DataEntry::Integer(-46), a - b);
 
-        let a = DataEntry::Integer(-34);
-        let b = DataEntry::Text("hello world".to_owned());
-        assert_eq!(DataEntry::Invalid("subtracting strings is invalid".to_owned()), a - b);
-
         let a = DataEntry::Double(-100_000.000_1);
         let b = DataEntry::Long(-12);
         assert_eq!(DataEntry::Double(-99_988.000_1), a - b);
 
-        let a = DataEntry::Character('x');
-        let b = DataEntry::Boolean(false);
-        assert_eq!(DataEntry::Invalid("subtracting from characters is invalid".to_owned()), a - b);
-
         let a = DataEntry::ULong(123_456_789);
         let b = DataEntry::Boolean(true);
-        assert_eq!(DataEntry::Double(123_456_788 as f64), a - b);
+        assert_eq!(DataEntry::Double(123_456_788f64), a - b);
 
         let a = DataEntry::Boolean(false);
         let b = DataEntry::Double(234_567.120_345);
@@ -678,15 +722,27 @@ mod tests {
 
         let a = DataEntry::Integer(-23);
         let b = DataEntry::ULong(234_567);
-        assert_eq!(DataEntry::Double(-234_590 as f64), a - b);
+        assert_eq!(DataEntry::Double(-234_590f64), a - b);
 
         let a = DataEntry::Boolean(false);
         let b = DataEntry::Boolean(true);
         assert_eq!(DataEntry::Integer(-1), a - b);
+    }
 
-        let a = DataEntry::Invalid("Some error explanation".to_owned());
-        let b = DataEntry::Integer(123);
-        assert_eq!(DataEntry::Invalid("Some error explanation".to_owned()), a - b);
+    #[test]
+    #[should_panic(expected="subtracting from characters is invalid")]
+    fn invalid_sub_01() {
+        let a = DataEntry::Character('x');
+        let b = DataEntry::Boolean(false);
+        let _c = a - b;      // panic!
+    }
+
+    #[test]
+    #[should_panic(expected="subtracting strings is invalid")]
+    fn invalid_sub_02() {
+        let a = DataEntry::Integer(-34);
+        let b = DataEntry::Text("hello world".to_owned());
+        let _c = a - b;      // panic!
     }
 
     #[test]
@@ -709,36 +765,118 @@ mod tests {
 
         let a = DataEntry::ULong(123_456_789);
         let b = DataEntry::Boolean(true);
-        assert_eq!(DataEntry::Double(123_456_789 as f64), a * b);
+        assert_eq!(DataEntry::Double(123_456_789f64), a * b);
 
         let a = DataEntry::Boolean(false);
         let b = DataEntry::Double(234_567.120_345);
-        assert_eq!(DataEntry::Double(0 as f64), a * b);
+        assert_eq!(DataEntry::Double(0f64), a * b);
 
         let a = DataEntry::Integer(-23);
         let b = DataEntry::ULong(234_567);
-        assert_eq!(DataEntry::Double(-5_395_041 as f64), a * b);
+        assert_eq!(DataEntry::Double(-5_395_041f64), a * b);
 
         let a = DataEntry::Boolean(false);
         let b = DataEntry::Boolean(true);
         assert_eq!(DataEntry::Integer(0), a * b);
 
-        let a = DataEntry::Invalid("Some error explanation".to_owned());
-        let b = DataEntry::Integer(123);
-        assert_eq!(DataEntry::Invalid("Some error explanation".to_owned()), a * b);
-
         let a = DataEntry::Text("hello ".to_owned());
         let b = DataEntry::Float(3.4);
         assert_eq!(DataEntry::Text("hello hello hello ".to_owned()), a * b);
 
-        let a = DataEntry::Long(5 as i64);
+        let a = DataEntry::Long(5i64);
         let b = DataEntry::Character('a');
         assert_eq!(DataEntry::Text("aaaaa".to_owned()), a * b);
 
         let a = DataEntry::Boolean(true);
         let b = DataEntry::Text("Please display me".to_owned());
         assert_eq!(DataEntry::Text("Please display me".to_owned()), a * b);
+    }
 
+    #[test]
+    #[should_panic(expected="mutliplying a string with a character is invalid")]
+    fn invalid_mul_01() {
+        let a = DataEntry::Text("hello".to_owned());
+        let b = DataEntry::Character('a');
+        let _c = a * b;      // panic!
+    }
+
+    #[test]
+    #[should_panic(expected="mutliplying a character with another is invalid")]
+    fn invalid_mul_02() {
+        let a = DataEntry::Character('a');
+        let b = DataEntry::Character('b');
+        let _c = a * b;      // panic!
+    }
+
+    #[test]
+    fn division() {
+        let a = DataEntry::Integer(-34);
+        let b = DataEntry::Integer(12);
+        assert_eq!(DataEntry::Integer(-2), a / b);
+
+        let a = DataEntry::Double(-100_000.000_1);
+        let b = DataEntry::Long(-12);
+        let c = a / b;
+        assert!(DataEntry::Double(8_333.33334166) < c);
+        assert!(DataEntry::Double(8_333.33334167) > c);
+
+        let a = DataEntry::Boolean(false);
+        let b = DataEntry::Double(234_567.120_345);
+        assert_eq!(DataEntry::Double(0f64), a / b);
+
+        let a = DataEntry::Integer(-23);
+        let b = DataEntry::ULong(234_567);
+        let c = a / b;
+        assert!(DataEntry::Double(-9.8053008e-5f64) > c);
+        assert!(DataEntry::Double(-9.8053009e-5f64) < c);
+    }
+
+    #[test]
+    #[should_panic(expected="dividing by string is invalid")]
+    fn invalid_div_01() {
+        let a = DataEntry::Integer(-34);
+        let b = DataEntry::Text("hello world".to_owned());
+        let _c = a / b;     //panic!
+    }
+
+    #[test]
+    #[should_panic(expected="dividing characters is invalid")]
+    fn invalid_div_02() {
+        let a = DataEntry::Character('x');
+        let b = DataEntry::Boolean(false);
+        let _c = a / b;     // panic!
+    }
+
+    #[test]
+    #[should_panic(expected="dividing by boolean is invalid")]
+    fn invalid_div_03() {
+        let a = DataEntry::ULong(123_456_789);
+        let b = DataEntry::Boolean(true);
+        let _c = a / b;     //panic!
+    }
+
+    #[test]
+    #[should_panic(expected="dividing by boolean is invalid")]
+    fn invalid_div_04() {
+        let a = DataEntry::Boolean(false);
+        let b = DataEntry::Boolean(true);
+        let _c = a / b;     // panic!
+    }
+
+    #[test]
+    #[should_panic(expected="dividing strings is invalid")]
+    fn invalid_div_05() {
+        let a = DataEntry::Text("hello ".to_owned());
+        let b = DataEntry::Float(3.4);
+        let _c = a / b;     // panic!
+    }
+
+    #[test]
+    #[should_panic(expected="dividing by character is invalid")]
+    fn invalid_div_06() {
+        let a = DataEntry::Long(5i64);
+        let b = DataEntry::Character('a');
+        let _c = a / b;     // panic!
     }
 
     #[test]
