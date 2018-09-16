@@ -453,7 +453,7 @@ mod tests {
 
         let a = DataEntry::Invalid("Some error explanation".to_owned());
         let b = DataEntry::Integer(123);
-        assert_eq!(DataEntry::Invalid("Some error explanation".to_owned()), a + b);
+        assert_eq!(DataEntry::Invalid("Some error explanation".to_owned()), a - b);
     }
 
     #[test]
