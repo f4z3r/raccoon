@@ -2,14 +2,10 @@
 
 #![deny(missing_docs)]
 
+#[macro_use]
+extern crate quick_error;
+
+pub mod error;
 pub mod entry;
 pub mod series;
 pub mod dataframe;
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}

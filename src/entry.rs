@@ -22,7 +22,9 @@ pub enum DataEntry {
     /// A boolean entry.
     Boolean(bool),
     /// A character entry.
-    Character(char)
+    Character(char),
+    /// A missing entry
+    NA
 }
 
 impl DataEntry {
@@ -36,7 +38,8 @@ impl DataEntry {
     /// - `f32`,
     /// - `f64`,
     /// - `bool`,
-    /// - `char`.
+    /// - `char`,
+    /// - `na`.
     ///
     /// # Returns
     /// One of the above as a string reference.
@@ -51,6 +54,222 @@ impl DataEntry {
             DataEntry::Double(_)    => "f64",
             DataEntry::Boolean(_)   => "bool",
             DataEntry::Character(_) => "char",
+            DataEntry::NA           => "na"
+        }
+    }
+
+    /// Retrieves the type of the entry.
+    ///
+    /// # Returns
+    /// A `DataType` object.
+    pub fn get_type(&self) -> DataType {
+        match self {
+            DataEntry::Text(_)      => DataType::Text,
+            DataEntry::Integer(_)   => DataType::Integer,
+            DataEntry::UInteger(_)  => DataType::UInteger,
+            DataEntry::Long(_)      => DataType::Long,
+            DataEntry::ULong(_)     => DataType::ULong,
+            DataEntry::Float(_)     => DataType::Float,
+            DataEntry::Double(_)    => DataType::Double,
+            DataEntry::Boolean(_)   => DataType::Boolean,
+            DataEntry::Character(_) => DataType::Character,
+            DataEntry::NA           => DataType::NA
+        }
+    }
+
+    /// Parse this entry into another type.
+    ///
+    /// # Args
+    /// - `data_type`: the data type that is desired.
+    ///
+    /// # Returns
+    /// A new `DataEntry`. Lossy conversions that reduce precision are allowed (e.g. `DataType::Float` to
+    /// `DataType::Integer`). However, conversions from signed to unsigned numericals will return `DataEntry::NA` (e.g.
+    /// `DataType::Long` to `DataType::UInteger`).
+    ///
+    /// Moreover, no type can be converted to `DataType::Character` except for entries having type `DataType::Text`.
+    ///
+    /// All types can be converted into `DataType::Boolean`, with exception of `DataType::Character`. The conversion
+    /// is performed using a simple "equals 0" check for numeric values and a full parse for `DataType::Text`.
+    pub fn parse(&self, data_type: &DataType) -> DataEntry {
+        match *self {
+            DataEntry::Integer(int)         => {
+                match *data_type {
+                    DataType::Integer   => DataEntry::from(int),
+                    DataType::UInteger  => DataEntry::NA,
+                    DataType::Long      => DataEntry::from(int as i64),
+                    DataType::ULong     => DataEntry::NA,
+                    DataType::Float     => DataEntry::from(int as f32),
+                    DataType::Double    => DataEntry::from(int as f64),
+                    DataType::Boolean   => DataEntry::from(int != 0),
+                    DataType::Character => DataEntry::NA,
+                    DataType::Text      => DataEntry::from(int.to_string()),
+                    _                   => DataEntry::NA,
+
+                }
+            },
+            DataEntry::UInteger(int)        => {
+                match data_type {
+                    DataType::Integer   => DataEntry::NA,
+                    DataType::UInteger  => DataEntry::from(int),
+                    DataType::Long      => DataEntry::from(int as i64),
+                    DataType::ULong     => DataEntry::from(int as u64),
+                    DataType::Float     => DataEntry::from(int as f32),
+                    DataType::Double    => DataEntry::from(int as f64),
+                    DataType::Boolean   => DataEntry::from(int != 0u32),
+                    DataType::Character => DataEntry::NA,
+                    DataType::Text      => DataEntry::from(int.to_string()),
+                    _                   => DataEntry::NA,
+
+                }
+            },
+            DataEntry::Long(int)            => {
+                match data_type {
+                    DataType::Integer   => DataEntry::NA,
+                    DataType::UInteger  => DataEntry::NA,
+                    DataType::Long      => DataEntry::from(int),
+                    DataType::ULong     => DataEntry::NA,
+                    DataType::Float     => DataEntry::from(int as f32),
+                    DataType::Double    => DataEntry::from(int as f64),
+                    DataType::Boolean   => DataEntry::from(int != 0i64),
+                    DataType::Character => DataEntry::NA,
+                    DataType::Text      => DataEntry::from(int.to_string()),
+                    _                   => DataEntry::NA,
+
+                }
+            },
+            DataEntry::ULong(int)           => {
+                match data_type {
+                    DataType::Integer   => DataEntry::NA,
+                    DataType::UInteger  => DataEntry::NA,
+                    DataType::Long      => DataEntry::NA,
+                    DataType::ULong     => DataEntry::from(int),
+                    DataType::Float     => DataEntry::from(int as f32),
+                    DataType::Double    => DataEntry::from(int as f64),
+                    DataType::Boolean   => DataEntry::from(int != 0u64),
+                    DataType::Character => DataEntry::NA,
+                    DataType::Text      => DataEntry::from(int.to_string()),
+                    _                   => DataEntry::NA,
+
+                }
+            },
+            DataEntry::Float(float)         => {
+                match data_type {
+                    DataType::Integer   => DataEntry::from(float as i32),
+                    DataType::UInteger  => DataEntry::NA,
+                    DataType::Long      => DataEntry::from(float as i64),
+                    DataType::ULong     => DataEntry::NA,
+                    DataType::Float     => DataEntry::from(float),
+                    DataType::Double    => DataEntry::from(float as f64),
+                    DataType::Boolean   => DataEntry::from(float != 0f32),
+                    DataType::Character => DataEntry::NA,
+                    DataType::Text      => DataEntry::from(float.to_string()),
+                    _                   => DataEntry::NA,
+
+                }
+            },
+            DataEntry::Double(float)        => {
+                match data_type {
+                    DataType::Integer   => DataEntry::from(float as i32),
+                    DataType::UInteger  => DataEntry::NA,
+                    DataType::Long      => DataEntry::from(float as i64),
+                    DataType::ULong     => DataEntry::NA,
+                    DataType::Float     => DataEntry::from(float as f32),
+                    DataType::Double    => DataEntry::from(float),
+                    DataType::Boolean   => DataEntry::from(float != 0f64),
+                    DataType::Character => DataEntry::NA,
+                    DataType::Text      => DataEntry::from(float.to_string()),
+                    _                   => DataEntry::NA,
+
+                }
+            },
+            DataEntry::Boolean(boolean)     => {
+                match data_type {
+                    DataType::Integer   => DataEntry::from(boolean as i32),
+                    DataType::UInteger  => DataEntry::from(boolean as u32),
+                    DataType::Long      => DataEntry::from(boolean as i64),
+                    DataType::ULong     => DataEntry::from(boolean as u64),
+                    DataType::Float     => DataEntry::from(boolean as u32 as f32),
+                    DataType::Double    => DataEntry::from(boolean as u32 as f64),
+                    DataType::Boolean   => DataEntry::from(boolean),
+                    DataType::Character => DataEntry::NA,
+                    DataType::Text      => DataEntry::from(boolean.to_string()),
+                    _                   => DataEntry::NA,
+
+                }
+            },
+            DataEntry::Character(ch)        => {
+                match data_type {
+                    DataType::Integer   => DataEntry::from(ch as i32),
+                    DataType::UInteger  => DataEntry::from(ch as u32),
+                    DataType::Long      => DataEntry::from(ch as i64),
+                    DataType::ULong     => DataEntry::from(ch as u64),
+                    DataType::Float     => DataEntry::from(ch as u32 as f32),
+                    DataType::Double    => DataEntry::from(ch as u32 as f64),
+                    DataType::Boolean   => DataEntry::NA,
+                    DataType::Character => DataEntry::from(ch),
+                    DataType::Text      => DataEntry::from(ch.to_string()),
+                    _                   => DataEntry::NA,
+
+                }
+            },
+            DataEntry::Text(ref txt)            => {
+                match data_type {
+                    DataType::Integer   => {
+                        match txt.parse::<i32>() {
+                            Ok(int) => DataEntry::from(int),
+                            Err(_)  => DataEntry::NA
+                        }
+                    },
+                    DataType::UInteger  => {
+                        match txt.parse::<u32>() {
+                            Ok(int) => DataEntry::from(int),
+                            Err(_)  => DataEntry::NA
+                        }
+                    },
+                    DataType::Long      => {
+                        match txt.parse::<i64>() {
+                            Ok(int) => DataEntry::from(int),
+                            Err(_)  => DataEntry::NA
+                        }
+                    },
+                    DataType::ULong     => {
+                        match txt.parse::<u64>() {
+                            Ok(int) => DataEntry::from(int),
+                            Err(_)  => DataEntry::NA
+                        }
+                    },
+                    DataType::Float     => {
+                        match txt.parse::<f32>() {
+                            Ok(f)   => DataEntry::from(f),
+                            Err(_)  => DataEntry::NA
+                        }
+                    },
+                    DataType::Double    => {
+                        match txt.parse::<f64>() {
+                            Ok(f)   => DataEntry::from(f),
+                            Err(_)  => DataEntry::NA
+                        }
+                    },
+                    DataType::Boolean   => {
+                        match txt.parse::<bool>() {
+                            Ok(b)   => DataEntry::from(b),
+                            Err(_)  => DataEntry::NA
+                        }
+                    },
+                    DataType::Character => {
+                        match txt.parse::<char>() {
+                            Ok(ch)  => DataEntry::from(ch),
+                            Err(_)  => DataEntry::NA
+                        }
+                    },
+                    DataType::Text      => DataEntry::from(txt),
+                    _                   => DataEntry::NA,
+
+                }
+            },
+            _                               => DataEntry::NA
+
         }
     }
 }
@@ -70,7 +289,8 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 + f2),
                     DataEntry::Boolean(b2)      => DataEntry::Integer(int1 + b2 as i32),
                     DataEntry::Character(ch1)   => DataEntry::Text(int1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2)
+                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2),
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::UInteger(int1)   => {
@@ -83,7 +303,8 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 + f2),
                     DataEntry::Boolean(b2)      => DataEntry::UInteger(int1 + b2 as u32),
                     DataEntry::Character(ch1)   => DataEntry::Text(int1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2)
+                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2),
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Long(int1)       => {
@@ -96,7 +317,8 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 + f2),
                     DataEntry::Boolean(b2)      => DataEntry::Long(int1 + b2 as i64),
                     DataEntry::Character(ch1)   => DataEntry::Text(int1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2)
+                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2),
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::ULong(int1)      => {
@@ -109,7 +331,8 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 + f2),
                     DataEntry::Boolean(b2)      => DataEntry::ULong(int1 + b2 as u64),
                     DataEntry::Character(ch1)   => DataEntry::Text(int1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2)
+                    DataEntry::Text(txt2)       => DataEntry::Text(int1.to_string() + &txt2),
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Float(f1)        => {
@@ -122,7 +345,8 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(f1 as f64 + f2),
                     DataEntry::Boolean(b2)      => DataEntry::Float(f1 + b2 as u8 as f32),
                     DataEntry::Character(ch1)   => DataEntry::Text(f1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(f1.to_string() + &txt2)
+                    DataEntry::Text(txt2)       => DataEntry::Text(f1.to_string() + &txt2),
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Double(f1)       => {
@@ -135,7 +359,8 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(f1 + f2),
                     DataEntry::Boolean(b2)      => DataEntry::Double(f1 + b2 as u8 as f64),
                     DataEntry::Character(ch1)   => DataEntry::Text(f1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(f1.to_string() + &txt2)
+                    DataEntry::Text(txt2)       => DataEntry::Text(f1.to_string() + &txt2),
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Boolean(b1)      => {
@@ -148,7 +373,8 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(b1 as u8 as f64 + f2),
                     DataEntry::Boolean(b2)      => DataEntry::Integer(b1 as i32 + b2 as i32),
                     DataEntry::Character(ch1)   => DataEntry::Text(b1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(b1.to_string() + &txt2)
+                    DataEntry::Text(txt2)       => DataEntry::Text(b1.to_string() + &txt2),
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Character(ch1)   => {
@@ -161,7 +387,8 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Text(ch1.to_string() + &f2.to_string()),
                     DataEntry::Boolean(b2)      => DataEntry::Text(ch1.to_string() + &b2.to_string()),
                     DataEntry::Character(ch1)   => DataEntry::Text(ch1.to_string() + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(ch1.to_string() + &txt2)
+                    DataEntry::Text(txt2)       => DataEntry::Text(ch1.to_string() + &txt2),
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Text(txt1)       => {
@@ -174,9 +401,11 @@ impl Add for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Text(txt1 + &f2.to_string()),
                     DataEntry::Boolean(b2)      => DataEntry::Text(txt1 + &b2.to_string()),
                     DataEntry::Character(ch1)   => DataEntry::Text(txt1 + &ch1.to_string()),
-                    DataEntry::Text(txt2)       => DataEntry::Text(txt1 + &txt2)
+                    DataEntry::Text(txt2)       => DataEntry::Text(txt1 + &txt2),
+                    _                           => DataEntry::NA
                 }
-            }
+            },
+            _                           => DataEntry::NA
         }
     }
 }
@@ -195,8 +424,7 @@ impl Sub for DataEntry {
                     DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 - f2),
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 - f2),
                     DataEntry::Boolean(b2)      => DataEntry::Integer(int1 - b2 as i32),
-                    DataEntry::Character(_)     => panic!("subtracting characters is invalid"),
-                    DataEntry::Text(_)          => panic!("subtracting strings is invalid")
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::UInteger(int1)   => {
@@ -208,8 +436,7 @@ impl Sub for DataEntry {
                     DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 - f2),
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 - f2),
                     DataEntry::Boolean(b2)      => DataEntry::Integer(int1 as i32 - b2 as i32),
-                    DataEntry::Character(_)     => panic!("subtracting characters is invalid"),
-                    DataEntry::Text(_)          => panic!("subtracting strings is invalid")
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Long(int1)       => {
@@ -221,8 +448,7 @@ impl Sub for DataEntry {
                     DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 - f2),
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 - f2),
                     DataEntry::Boolean(b2)      => DataEntry::Long(int1 - b2 as i64),
-                    DataEntry::Character(_)     => panic!("subtracting characters is invalid"),
-                    DataEntry::Text(_)          => panic!("subtracting strings is invalid")
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::ULong(int1)      => {
@@ -234,8 +460,7 @@ impl Sub for DataEntry {
                     DataEntry::Float(f2)        => DataEntry::Double(int1 as f64 - f2 as f64),
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 - f2),
                     DataEntry::Boolean(b2)      => DataEntry::Double(int1 as f64 - b2 as u8 as f64),
-                    DataEntry::Character(_)     => panic!("subtracting characters is invalid"),
-                    DataEntry::Text(_)          => panic!("subtracting strings is invalid")
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Float(f1)        => {
@@ -247,8 +472,7 @@ impl Sub for DataEntry {
                     DataEntry::Float(f2)        => DataEntry::Float(f1 - f2),
                     DataEntry::Double(f2)       => DataEntry::Double(f1 as f64 - f2),
                     DataEntry::Boolean(b2)      => DataEntry::Float(f1 - b2 as u8 as f32),
-                    DataEntry::Character(_)     => panic!("subtracting characters is invalid"),
-                    DataEntry::Text(_)          => panic!("subtracting strings is invalid")
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Double(f1)       => {
@@ -260,8 +484,7 @@ impl Sub for DataEntry {
                     DataEntry::Float(f2)        => DataEntry::Double(f1 - f2 as f64),
                     DataEntry::Double(f2)       => DataEntry::Double(f1 - f2),
                     DataEntry::Boolean(b2)      => DataEntry::Double(f1 - b2 as u8 as f64),
-                    DataEntry::Character(_)     => panic!("subtracting characters is invalid"),
-                    DataEntry::Text(_)          => panic!("subtracting strings is invalid")
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Boolean(b1)      => {
@@ -273,12 +496,10 @@ impl Sub for DataEntry {
                     DataEntry::Float(f2)        => DataEntry::Float(b1 as u8 as f32 - f2),
                     DataEntry::Double(f2)       => DataEntry::Double(b1 as u8 as f64 - f2),
                     DataEntry::Boolean(b2)      => DataEntry::Integer(b1 as i32 - b2 as i32),
-                    DataEntry::Character(_)     => panic!("subtracting characters is invalid"),
-                    DataEntry::Text(_)          => panic!("subtracting strings is invalid")
+                    _                           => DataEntry::NA
                 }
             },
-            DataEntry::Character(_)     => panic!("subtracting from characters is invalid"),
-            DataEntry::Text(_)          => panic!("subtracting from strings is invalid")
+            _                           => DataEntry::NA
         }
     }
 }
@@ -310,7 +531,8 @@ impl Mul for DataEntry {
                         } else {
                             DataEntry::Text("".to_owned())
                         }
-                    }
+                    },
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::UInteger(int1)   => {
@@ -323,7 +545,8 @@ impl Mul for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 * f2),
                     DataEntry::Boolean(b2)      => DataEntry::Integer(int1 as i32 * b2 as i32),
                     DataEntry::Character(ch1)   => DataEntry::Text(ch1.to_string().repeat(int1 as usize)),
-                    DataEntry::Text(txt2)       => DataEntry::Text(txt2.repeat(int1 as usize))
+                    DataEntry::Text(txt2)       => DataEntry::Text(txt2.repeat(int1 as usize)),
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Long(int1)       => {
@@ -348,7 +571,8 @@ impl Mul for DataEntry {
                         } else {
                             DataEntry::Text("".to_owned())
                         }
-                    }
+                    },
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::ULong(int1)      => {
@@ -361,7 +585,8 @@ impl Mul for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 * f2),
                     DataEntry::Boolean(b2)      => DataEntry::Double(int1 as f64 * b2 as u8 as f64),
                     DataEntry::Character(ch1)   => DataEntry::Text(ch1.to_string().repeat(int1 as usize)),
-                    DataEntry::Text(txt2)       => DataEntry::Text(txt2.repeat(int1 as usize))
+                    DataEntry::Text(txt2)       => DataEntry::Text(txt2.repeat(int1 as usize)),
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Float(f1)        => {
@@ -386,7 +611,8 @@ impl Mul for DataEntry {
                         } else {
                             DataEntry::Text("".to_owned())
                         }
-                    }
+                    },
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Double(f1)       => {
@@ -411,7 +637,8 @@ impl Mul for DataEntry {
                         } else {
                             DataEntry::Text("".to_owned())
                         }
-                    }
+                    },
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Boolean(b1)      => {
@@ -424,7 +651,8 @@ impl Mul for DataEntry {
                     DataEntry::Double(f2)       => DataEntry::Double(b1 as u8 as f64 * f2),
                     DataEntry::Boolean(b2)      => DataEntry::Integer(b1 as i32 * b2 as i32),
                     DataEntry::Character(ch1)   => DataEntry::Text(ch1.to_string().repeat(b1 as usize)),
-                    DataEntry::Text(txt2)       => DataEntry::Text(txt2.repeat(b1 as usize))
+                    DataEntry::Text(txt2)       => DataEntry::Text(txt2.repeat(b1 as usize)),
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Character(ch1)   => {
@@ -460,8 +688,7 @@ impl Mul for DataEntry {
                         }
                     },
                     DataEntry::Boolean(b2)      => DataEntry::Text(ch1.to_string().repeat(b2 as usize)),
-                    DataEntry::Character(_)     => panic!("mutliplying a character with another is invalid"),
-                    DataEntry::Text(_)          => panic!("multiplying a character with a string is invalid")
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Text(txt1)       => {
@@ -497,10 +724,10 @@ impl Mul for DataEntry {
                         }
                     },
                     DataEntry::Boolean(b2)      => DataEntry::Text(txt1.repeat(b2 as usize)),
-                    DataEntry::Character(_)     => panic!("mutliplying a string with a character is invalid"),
-                    DataEntry::Text(_)          => panic!("multiplying a string with another is invalid")
+                    _                           => DataEntry::NA
                 }
-            }
+            },
+            _                           => DataEntry::NA
         }
     }
 }
@@ -518,9 +745,7 @@ impl Div for DataEntry {
                     DataEntry::ULong(int2)      => DataEntry::Double(int1 as f64 / int2 as f64),
                     DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 / f2),
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 / f2),
-                    DataEntry::Boolean(_)       => panic!("dividing by boolean is invalid"),
-                    DataEntry::Character(_)     => panic!("dividing by character is invalid"),
-                    DataEntry::Text(_)          => panic!("dividing by string is invalid")
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::UInteger(int1)   => {
@@ -531,9 +756,7 @@ impl Div for DataEntry {
                     DataEntry::ULong(int2)      => DataEntry::ULong(int1 as u64 / int2),
                     DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 / f2),
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 / f2),
-                    DataEntry::Boolean(_)       => panic!("dividing by boolean is invalid"),
-                    DataEntry::Character(_)     => panic!("dividing by character is invalid"),
-                    DataEntry::Text(_)          => panic!("dividing by string is invalid")
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Long(int1)       => {
@@ -544,9 +767,7 @@ impl Div for DataEntry {
                     DataEntry::ULong(int2)      => DataEntry::Double(int1 as f64 / int2 as f64),
                     DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 / f2),
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 / f2),
-                    DataEntry::Boolean(_)       => panic!("dividing by boolean is invalid"),
-                    DataEntry::Character(_)     => panic!("dividing by character is invalid"),
-                    DataEntry::Text(_)          => panic!("dividing by string is invalid")
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::ULong(int1)      => {
@@ -557,9 +778,7 @@ impl Div for DataEntry {
                     DataEntry::ULong(int2)      => DataEntry::ULong(int1 / int2),
                     DataEntry::Float(f2)        => DataEntry::Double(int1 as f64 / f2 as f64),
                     DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 / f2),
-                    DataEntry::Boolean(_)       => panic!("dividing by boolean is invalid"),
-                    DataEntry::Character(_)     => panic!("dividing by character is invalid"),
-                    DataEntry::Text(_)          => panic!("dividing by string is invalid")
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Float(f1)        => {
@@ -570,9 +789,7 @@ impl Div for DataEntry {
                     DataEntry::ULong(int2)      => DataEntry::Double(f1 as f64 / int2 as f64),
                     DataEntry::Float(f2)        => DataEntry::Float(f1 / f2),
                     DataEntry::Double(f2)       => DataEntry::Double(f1 as f64 / f2),
-                    DataEntry::Boolean(_)       => panic!("dividing by boolean is invalid"),
-                    DataEntry::Character(_)     => panic!("dividing by character is invalid"),
-                    DataEntry::Text(_)          => panic!("dividing by string is invalid")
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Double(f1)       => {
@@ -583,9 +800,7 @@ impl Div for DataEntry {
                     DataEntry::ULong(int2)      => DataEntry::Double(f1 / int2 as f64),
                     DataEntry::Float(f2)        => DataEntry::Double(f1 / f2 as f64),
                     DataEntry::Double(f2)       => DataEntry::Double(f1 / f2),
-                    DataEntry::Boolean(_)       => panic!("dividing by boolean is invalid"),
-                    DataEntry::Character(_)     => panic!("dividing by character is invalid"),
-                    DataEntry::Text(_)          => panic!("dividing by string is invalid")
+                    _                           => DataEntry::NA
                 }
             },
             DataEntry::Boolean(b1)      => {
@@ -596,20 +811,107 @@ impl Div for DataEntry {
                     DataEntry::ULong(int2)      => DataEntry::ULong(b1 as u64 / int2),
                     DataEntry::Float(f2)        => DataEntry::Float(b1 as u8 as f32 / f2),
                     DataEntry::Double(f2)       => DataEntry::Double(b1 as u8 as f64 / f2),
-                    DataEntry::Boolean(_)       => panic!("dividing by boolean is invalid"),
-                    DataEntry::Character(_)     => panic!("dividing by character is invalid"),
-                    DataEntry::Text(_)          => panic!("dividing by string is invalid")
+                    _                           => DataEntry::NA
                 }
             },
-            DataEntry::Character(_)     => panic!("dividing characters is invalid"),
-            DataEntry::Text(_)          => panic!("dividing strings is invalid")
+            _                           => DataEntry::NA
         }
+    }
+}
+
+impl From<i8> for DataEntry {
+    fn from(integer: i8) -> Self {
+        DataEntry::Integer(integer as i32)
+    }
+}
+
+impl From<u8> for DataEntry {
+    fn from(integer: u8) -> Self {
+        DataEntry::UInteger(integer as u32)
+    }
+}
+
+impl From<i16> for DataEntry {
+    fn from(integer: i16) -> Self {
+        DataEntry::Integer(integer as i32)
+    }
+}
+
+impl From<u16> for DataEntry {
+    fn from(integer: u16) -> Self {
+        DataEntry::UInteger(integer as u32)
+    }
+}
+
+impl From<i32> for DataEntry {
+    fn from(integer: i32) -> Self {
+        DataEntry::Integer(integer)
+    }
+}
+
+impl From<u32> for DataEntry {
+    fn from(integer: u32) -> Self {
+        DataEntry::UInteger(integer)
+    }
+}
+
+impl From<i64> for DataEntry {
+    fn from(integer: i64) -> Self {
+        DataEntry::Long(integer)
+    }
+}
+
+impl From<u64> for DataEntry {
+    fn from(integer: u64) -> Self {
+        DataEntry::ULong(integer)
+    }
+}
+
+impl From<f32> for DataEntry {
+    fn from(float: f32) -> Self {
+        DataEntry::Float(float)
+    }
+}
+
+impl From<f64> for DataEntry {
+    fn from(float: f64) -> Self {
+        DataEntry::Double(float)
+    }
+}
+
+impl From<bool> for DataEntry {
+    fn from(boolean: bool) -> Self {
+        DataEntry::Boolean(boolean)
+    }
+}
+
+impl From<char> for DataEntry {
+    fn from(character: char) -> Self {
+        DataEntry::Character(character)
+    }
+}
+
+impl From<String> for DataEntry {
+    fn from(text: String) -> Self {
+        DataEntry::Text(text)
+    }
+}
+
+impl<'a> From<&'a String> for DataEntry {
+    fn from(text: &'a String) -> Self {
+        DataEntry::Text(text.to_owned())
+    }
+}
+
+impl<'a> From<&'a str> for DataEntry {
+    fn from(text: &'a str) -> Self {
+        DataEntry::Text(text.to_owned())
     }
 }
 
 
 /// The data type any entry can take.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DataType {
     /// Text
     Text,
@@ -628,7 +930,9 @@ pub enum DataType {
     /// Boolean
     Boolean,
     /// Character
-    Character
+    Character,
+    /// Missing
+    NA
 }
 
 
@@ -641,30 +945,64 @@ mod tests {
     fn getting_types() {
         let entry = DataEntry::Text("Some text".to_owned());
         assert_eq!("String", entry.internal_type());
+        assert_eq!(DataType::Text, entry.get_type());
 
         let entry = DataEntry::Integer(-353);
         assert_eq!("i32", entry.internal_type());
+        assert_eq!(DataType::Integer, entry.get_type());
 
         let entry = DataEntry::UInteger(454);
         assert_eq!("u32", entry.internal_type());
+        assert_eq!(DataType::UInteger, entry.get_type());
 
         let entry = DataEntry::Long(-123_456_789);
         assert_eq!("i64", entry.internal_type());
+        assert_eq!(DataType::Long, entry.get_type());
 
         let entry = DataEntry::ULong(987_654_321);
         assert_eq!("u64", entry.internal_type());
+        assert_eq!(DataType::ULong, entry.get_type());
 
         let entry = DataEntry::Float(-90.345);
         assert_eq!("f32", entry.internal_type());
+        assert_eq!(DataType::Float, entry.get_type());
 
         let entry = DataEntry::Double(-34532.34);
         assert_eq!("f64", entry.internal_type());
+        assert_eq!(DataType::Double, entry.get_type());
 
         let entry = DataEntry::Boolean(true);
         assert_eq!("bool", entry.internal_type());
+        assert_eq!(DataType::Boolean, entry.get_type());
 
         let entry = DataEntry::Character('a');
         assert_eq!("char", entry.internal_type());
+        assert_eq!(DataType::Character, entry.get_type());
+
+        let entry = DataEntry::NA;
+        assert_eq!("na", entry.internal_type());
+        assert_eq!(DataType::NA, entry.get_type());
+    }
+
+    #[test]
+    fn conversion() {
+        let entry = DataEntry::Integer(-42);
+        assert_eq!(DataEntry::Float(-42f32), entry.parse(&DataType::Float));
+
+        let entry = DataEntry::Float(12.4);
+        assert_eq!(DataEntry::Boolean(true), entry.parse(&DataType::Boolean));
+
+        let entry = DataEntry::Integer(-42);
+        assert_eq!(DataEntry::NA, entry.parse(&DataType::UInteger));
+
+        let entry = DataEntry::Text("123.345".to_owned());
+        assert_eq!(DataEntry::Double(123.345f64), entry.parse(&DataType::Double));
+
+        let entry = DataEntry::Text("z".to_owned());
+        assert_eq!(DataEntry::Character('z'), entry.parse(&DataType::Character));
+
+        let entry = DataEntry::Double(-42.4353f64);
+        assert_eq!(DataEntry::Integer(-42), entry.parse(&DataType::Integer));
     }
 
     #[test]
@@ -727,22 +1065,16 @@ mod tests {
         let a = DataEntry::Boolean(false);
         let b = DataEntry::Boolean(true);
         assert_eq!(DataEntry::Integer(-1), a - b);
-    }
 
-    #[test]
-    #[should_panic(expected="subtracting from characters is invalid")]
-    fn invalid_sub_01() {
         let a = DataEntry::Character('x');
         let b = DataEntry::Boolean(false);
-        let _c = a - b;      // panic!
-    }
+        let c = a - b;      // NA
+        assert_eq!(DataEntry::NA, c);
 
-    #[test]
-    #[should_panic(expected="subtracting strings is invalid")]
-    fn invalid_sub_02() {
         let a = DataEntry::Integer(-34);
         let b = DataEntry::Text("hello world".to_owned());
-        let _c = a - b;      // panic!
+        let c = a - b;      // NA
+        assert_eq!(DataEntry::NA, c);
     }
 
     #[test]
@@ -790,22 +1122,17 @@ mod tests {
         let a = DataEntry::Boolean(true);
         let b = DataEntry::Text("Please display me".to_owned());
         assert_eq!(DataEntry::Text("Please display me".to_owned()), a * b);
-    }
 
-    #[test]
-    #[should_panic(expected="mutliplying a string with a character is invalid")]
-    fn invalid_mul_01() {
         let a = DataEntry::Text("hello".to_owned());
         let b = DataEntry::Character('a');
-        let _c = a * b;      // panic!
-    }
+        let c = a * b;      // NA
+        assert_eq!(DataEntry::NA, c);
 
-    #[test]
-    #[should_panic(expected="mutliplying a character with another is invalid")]
-    fn invalid_mul_02() {
         let a = DataEntry::Character('a');
         let b = DataEntry::Character('b');
-        let _c = a * b;      // panic!
+        let c = a * b;      // NA
+        assert_eq!(DataEntry::NA, c);
+
     }
 
     #[test]
@@ -829,54 +1156,36 @@ mod tests {
         let c = a / b;
         assert!(DataEntry::Double(-9.8053008e-5f64) > c);
         assert!(DataEntry::Double(-9.8053009e-5f64) < c);
-    }
 
-    #[test]
-    #[should_panic(expected="dividing by string is invalid")]
-    fn invalid_div_01() {
         let a = DataEntry::Integer(-34);
         let b = DataEntry::Text("hello world".to_owned());
-        let _c = a / b;     //panic!
-    }
+        let c = a / b;     // NA
+        assert_eq!(DataEntry::NA, c);
 
-    #[test]
-    #[should_panic(expected="dividing characters is invalid")]
-    fn invalid_div_02() {
         let a = DataEntry::Character('x');
         let b = DataEntry::Boolean(false);
-        let _c = a / b;     // panic!
-    }
+        let c = a / b;     // NA
+        assert_eq!(DataEntry::NA, c);
 
-    #[test]
-    #[should_panic(expected="dividing by boolean is invalid")]
-    fn invalid_div_03() {
         let a = DataEntry::ULong(123_456_789);
         let b = DataEntry::Boolean(true);
-        let _c = a / b;     //panic!
-    }
+        let c = a / b;     // NA
+        assert_eq!(DataEntry::NA, c);
 
-    #[test]
-    #[should_panic(expected="dividing by boolean is invalid")]
-    fn invalid_div_04() {
         let a = DataEntry::Boolean(false);
         let b = DataEntry::Boolean(true);
-        let _c = a / b;     // panic!
-    }
+        let c = a / b;     // NA
+        assert_eq!(DataEntry::NA, c);
 
-    #[test]
-    #[should_panic(expected="dividing strings is invalid")]
-    fn invalid_div_05() {
         let a = DataEntry::Text("hello ".to_owned());
         let b = DataEntry::Float(3.4);
-        let _c = a / b;     // panic!
-    }
+        let c = a / b;     // NA
+        assert_eq!(DataEntry::NA, c);
 
-    #[test]
-    #[should_panic(expected="dividing by character is invalid")]
-    fn invalid_div_06() {
         let a = DataEntry::Long(5i64);
         let b = DataEntry::Character('a');
-        let _c = a / b;     // panic!
+        let c = a / b;     // NA
+        assert_eq!(DataEntry::NA, c);
     }
 
     #[test]
