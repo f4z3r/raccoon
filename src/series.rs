@@ -76,6 +76,9 @@ impl Series {
     }
 
     /// Getter for the series' data type.
+    ///
+    /// # Returns
+    /// A reference to the `DataType` of the series.
     pub fn data_type(&self) -> &DataType {
         &self.data_type
     }
