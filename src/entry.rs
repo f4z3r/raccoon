@@ -1,6 +1,6 @@
 //! `entry` module. Contains all code related to data entries.
 
-use std::ops::{Add, Sub};
+use std::ops::{Add, Sub, Div, Mul};
 
 /// A data entry.
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
@@ -313,6 +313,239 @@ impl Sub for DataEntry {
     }
 }
 
+impl Mul for DataEntry {
+    type Output = DataEntry;
+
+    fn mul(self, rhs: DataEntry) -> Self::Output {
+        match self {
+            DataEntry::Integer(int1)    => {
+                match rhs {
+                    DataEntry::Integer(int2)    => DataEntry::Integer(int1 * int2),
+                    DataEntry::UInteger(int2)   => DataEntry::Long(int1 as i64 * int2 as i64),
+                    DataEntry::Long(int2)       => DataEntry::Long(int1 as i64 * int2),
+                    DataEntry::ULong(int2)      => DataEntry::Double(int1 as f64 * int2 as f64),
+                    DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 * f2),
+                    DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 * f2),
+                    DataEntry::Boolean(b2)      => DataEntry::Integer(int1 * b2 as i32),
+                    DataEntry::Character(ch1)   => {
+                        if int1 >= 0i32 {
+                            DataEntry::Text(ch1.to_string().repeat(int1 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::Text(txt2)       => {
+                        if int1 >= 0i32 {
+                            DataEntry::Text(txt2.repeat(int1 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                }
+            },
+            DataEntry::UInteger(int1)   => {
+                match rhs {
+                    DataEntry::Integer(int2)    => DataEntry::Long(int1 as i64 * int2 as i64),
+                    DataEntry::UInteger(int2)   => DataEntry::UInteger(int1 * int2),
+                    DataEntry::Long(int2)       => DataEntry::Long(int1 as i64 * int2),
+                    DataEntry::ULong(int2)      => DataEntry::ULong(int1 as u64 * int2),
+                    DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 * f2),
+                    DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 * f2),
+                    DataEntry::Boolean(b2)      => DataEntry::Integer(int1 as i32 * b2 as i32),
+                    DataEntry::Character(ch1)   => DataEntry::Text(ch1.to_string().repeat(int1 as usize)),
+                    DataEntry::Text(txt2)       => DataEntry::Text(txt2.repeat(int1 as usize)),
+                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                }
+            },
+            DataEntry::Long(int1)       => {
+                match rhs {
+                    DataEntry::Integer(int2)    => DataEntry::Long(int1 as i64 * int2 as i64),
+                    DataEntry::UInteger(int2)   => DataEntry::Long(int1 as i64 * int2 as i64),
+                    DataEntry::Long(int2)       => DataEntry::Long(int1 * int2),
+                    DataEntry::ULong(int2)      => DataEntry::Double(int1 as f64 * int2 as f64),
+                    DataEntry::Float(f2)        => DataEntry::Float(int1 as f32 * f2),
+                    DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 * f2),
+                    DataEntry::Boolean(b2)      => DataEntry::Long(int1 * b2 as i64),
+                    DataEntry::Character(ch1)   => {
+                        if int1 >= 0i64 {
+                            DataEntry::Text(ch1.to_string().repeat(int1 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::Text(txt2)       => {
+                        if int1 >= 0i64 {
+                            DataEntry::Text(txt2.repeat(int1 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                }
+            },
+            DataEntry::ULong(int1)      => {
+                match rhs {
+                    DataEntry::Integer(int2)    => DataEntry::Double(int1 as f64 * int2 as f64),
+                    DataEntry::UInteger(int2)   => DataEntry::ULong(int1 * int2 as u64),
+                    DataEntry::Long(int2)       => DataEntry::Double(int1 as f64 * int2 as f64),
+                    DataEntry::ULong(int2)      => DataEntry::ULong(int1 - int2),
+                    DataEntry::Float(f2)        => DataEntry::Double(int1 as f64 * f2 as f64),
+                    DataEntry::Double(f2)       => DataEntry::Double(int1 as f64 * f2),
+                    DataEntry::Boolean(b2)      => DataEntry::Double(int1 as f64 * b2 as u8 as f64),
+                    DataEntry::Character(ch1)   => DataEntry::Text(ch1.to_string().repeat(int1 as usize)),
+                    DataEntry::Text(txt2)       => DataEntry::Text(txt2.repeat(int1 as usize)),
+                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                }
+            },
+            DataEntry::Float(f1)        => {
+                match rhs {
+                    DataEntry::Integer(int2)    => DataEntry::Float(f1 * int2 as f32),
+                    DataEntry::UInteger(int2)   => DataEntry::Float(f1 * int2 as f32),
+                    DataEntry::Long(int2)       => DataEntry::Double(f1 as f64 * int2 as f64),
+                    DataEntry::ULong(int2)      => DataEntry::Double(f1 as f64 * int2 as f64),
+                    DataEntry::Float(f2)        => DataEntry::Float(f1 * f2),
+                    DataEntry::Double(f2)       => DataEntry::Double(f1 as f64 * f2),
+                    DataEntry::Boolean(b2)      => DataEntry::Float(f1 * b2 as u8 as f32),
+                    DataEntry::Character(ch1)   => {
+                        if f1 >= 0f32 {
+                            DataEntry::Text(ch1.to_string().repeat(f1 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::Text(txt2)       => {
+                        if f1 >= 0f32 {
+                            DataEntry::Text(txt2.repeat(f1 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                }
+            },
+            DataEntry::Double(f1)       => {
+                match rhs {
+                    DataEntry::Integer(int2)    => DataEntry::Double(f1 * int2 as f64),
+                    DataEntry::UInteger(int2)   => DataEntry::Double(f1 * int2 as f64),
+                    DataEntry::Long(int2)       => DataEntry::Double(f1 * int2 as f64),
+                    DataEntry::ULong(int2)      => DataEntry::Double(f1 * int2 as f64),
+                    DataEntry::Float(f2)        => DataEntry::Double(f1 * f2 as f64),
+                    DataEntry::Double(f2)       => DataEntry::Double(f1 * f2),
+                    DataEntry::Boolean(b2)      => DataEntry::Double(f1 * b2 as u8 as f64),
+                    DataEntry::Character(ch1)   => {
+                        if f1 >= 0f64 {
+                            DataEntry::Text(ch1.to_string().repeat(f1 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::Text(txt2)       => {
+                        if f1 >= 0f64 {
+                            DataEntry::Text(txt2.repeat(f1 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                }
+            },
+            DataEntry::Boolean(b1)      => {
+                match rhs {
+                    DataEntry::Integer(int2)    => DataEntry::Integer(b1 as i32 * int2),
+                    DataEntry::UInteger(int2)   => DataEntry::UInteger(b1 as u32 * int2),
+                    DataEntry::Long(int2)       => DataEntry::Long(b1 as i64 * int2),
+                    DataEntry::ULong(int2)      => DataEntry::ULong(b1 as u64 * int2),
+                    DataEntry::Float(f2)        => DataEntry::Float(b1 as u8 as f32 * f2),
+                    DataEntry::Double(f2)       => DataEntry::Double(b1 as u8 as f64 * f2),
+                    DataEntry::Boolean(b2)      => DataEntry::Integer(b1 as i32 * b2 as i32),
+                    DataEntry::Character(ch1)   => DataEntry::Text(ch1.to_string().repeat(b1 as usize)),
+                    DataEntry::Text(txt2)       => DataEntry::Text(txt2.repeat(b1 as usize)),
+                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                }
+            },
+            DataEntry::Character(ch1)   => {
+                match rhs {
+                    DataEntry::Integer(int2)   => {
+                        if int2 >= 0i32 {
+                            DataEntry::Text(ch1.to_string().repeat(int2 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::Integer(int2)    => DataEntry::Text(ch1.to_string().repeat(int2 as usize)),
+                    DataEntry::UInteger(int2)   => DataEntry::Text(ch1.to_string().repeat(int2 as usize)),
+                    DataEntry::Long(int2)       => {
+                        if int2 >= 0i64 {
+                            DataEntry::Text(ch1.to_string().repeat(int2 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::ULong(int2)      => DataEntry::Text(ch1.to_string().repeat(int2 as usize)),
+                    DataEntry::Float(f2)        => {
+                        if f2 >= 0f32 {
+                            DataEntry::Text(ch1.to_string().repeat(f2 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::Double(f2)       => {
+                        if f2 >= 0f64 {
+                            DataEntry::Text(ch1.to_string().repeat(f2 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::Boolean(b2)      => DataEntry::Text(ch1.to_string().repeat(b2 as usize)),
+                    DataEntry::Character(_)     => DataEntry::Invalid("mutliplying a character with another is invalid".to_owned()),
+                    DataEntry::Text(_)          => DataEntry::Invalid("multiplying a character with a string is invalid".to_owned()),
+                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                }
+            },
+            DataEntry::Text(txt1)       => {
+                match rhs {
+                    DataEntry::Integer(int2)    => {
+                        if int2 >= 0i32 {
+                            DataEntry::Text(txt1.repeat(int2 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::UInteger(int2)   => DataEntry::Text(txt1.repeat(int2 as usize)),
+                    DataEntry::Long(int2)       => {
+                        if int2 >= 0i64 {
+                            DataEntry::Text(txt1.repeat(int2 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::ULong(int2)      => DataEntry::Text(txt1.repeat(int2 as usize)),
+                    DataEntry::Float(f2)        => {
+                        if f2 >= 0f32 {
+                            DataEntry::Text(txt1.repeat(f2 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::Double(f2)       => {
+                        if f2 >= 0f64 {
+                            DataEntry::Text(txt1.repeat(f2 as usize))
+                        } else {
+                            DataEntry::Text("".to_owned())
+                        }
+                    },
+                    DataEntry::Boolean(b2)      => DataEntry::Text(txt1.repeat(b2 as usize)),
+                    DataEntry::Character(_)     => DataEntry::Invalid("mutliplying a string with a character is invalid".to_owned()),
+                    DataEntry::Text(_)          => DataEntry::Invalid("multiplying a string with another is invalid".to_owned()),
+                    DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+                }
+            },
+            DataEntry::Invalid(error)   => DataEntry::Invalid(error.clone())
+        }
+    }
+}
+
 
 /// The data type any entry can take.
 #[derive(Debug)]
@@ -454,6 +687,58 @@ mod tests {
         let a = DataEntry::Invalid("Some error explanation".to_owned());
         let b = DataEntry::Integer(123);
         assert_eq!(DataEntry::Invalid("Some error explanation".to_owned()), a - b);
+    }
+
+    #[test]
+    fn multiplication() {
+        let a = DataEntry::Integer(-34);
+        let b = DataEntry::Integer(12);
+        assert_eq!(DataEntry::Integer(-408), a * b);
+
+        let a = DataEntry::Integer(-34);
+        let b = DataEntry::Text("hello world".to_owned());
+        assert_eq!(DataEntry::Text("".to_owned()), a * b);
+
+        let a = DataEntry::Double(-100_000.000_1);
+        let b = DataEntry::Long(-12);
+        assert_eq!(DataEntry::Double(1_200_000.001_2), a * b);
+
+        let a = DataEntry::Character('x');
+        let b = DataEntry::Boolean(false);
+        assert_eq!(DataEntry::Text("".to_owned()), a * b);
+
+        let a = DataEntry::ULong(123_456_789);
+        let b = DataEntry::Boolean(true);
+        assert_eq!(DataEntry::Double(123_456_789 as f64), a * b);
+
+        let a = DataEntry::Boolean(false);
+        let b = DataEntry::Double(234_567.120_345);
+        assert_eq!(DataEntry::Double(0 as f64), a * b);
+
+        let a = DataEntry::Integer(-23);
+        let b = DataEntry::ULong(234_567);
+        assert_eq!(DataEntry::Double(-5_395_041 as f64), a * b);
+
+        let a = DataEntry::Boolean(false);
+        let b = DataEntry::Boolean(true);
+        assert_eq!(DataEntry::Integer(0), a * b);
+
+        let a = DataEntry::Invalid("Some error explanation".to_owned());
+        let b = DataEntry::Integer(123);
+        assert_eq!(DataEntry::Invalid("Some error explanation".to_owned()), a * b);
+
+        let a = DataEntry::Text("hello ".to_owned());
+        let b = DataEntry::Float(3.4);
+        assert_eq!(DataEntry::Text("hello hello hello ".to_owned()), a * b);
+
+        let a = DataEntry::Long(5 as i64);
+        let b = DataEntry::Character('a');
+        assert_eq!(DataEntry::Text("aaaaa".to_owned()), a * b);
+
+        let a = DataEntry::Boolean(true);
+        let b = DataEntry::Text("Please display me".to_owned());
+        assert_eq!(DataEntry::Text("Please display me".to_owned()), a * b);
+
     }
 
     #[test]
