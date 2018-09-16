@@ -1,0 +1,6 @@
+[package]
+name = "raccoon"
+version = "0.1.0"
+authors = ["Jakob Beckmann <beckmann_jakob@hotmail.fr>"]
+
+[dependencies]
