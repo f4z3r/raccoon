@@ -1,7 +1,11 @@
 //! A cell-like entity that can store the most common primitives.
 //!
-//! `DataEntry` is usually used in conjonction with `Series`. By itself the entry has not much use. The `DataType`
+//! [`DataEntry`] is usually used in conjonction with [`Series`]. By itself the entry has not much use. The [`DataType`]
 //! enumeration provides the type of a `DataEntry`.
+//!
+//! [`Series`]: ../series/struct.Series.html
+//! [`DataEntry`]: ./enum.DataEntry.html
+//! [`DataType`]: ./enum.DataType.html
 //!
 //! # Note on Memory Efficiency
 //! Due to the way Rust allocates memory for `enum`s, the size of a single `DataEntry` will be equal to the largest data

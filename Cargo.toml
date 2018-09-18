@@ -1,7 +1,15 @@
 [package]
 name = "raccoon"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Jakob Beckmann <beckmann_jakob@hotmail.fr>"]
+license = "MIT"
+repository = "https://github.com/jakobbeckmann/raccoon"
+description = """
+A library aiming at facilitating handling of large amounts of data. The structure of the crate tries to follow python's
+pandas library.
+"""
+readme = "README.md"
+keywords = ["pandas", "dataframe", "series"]
 
 [dependencies]
 quick-error = "1.2.2"

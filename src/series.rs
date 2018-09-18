@@ -3,7 +3,10 @@
 // TODO: add info on performance.
 //!
 //! # Examples
-//! You can create a new `Series` using `new`:
+//! You can create a new [`Series`] using [`new`]:
+//!
+//! [`Series`]: ./struct.Series.html
+//! [`new`]: ./struct.Series.html#method.new
 //! ```
 //! use raccoon::{Series, DataType};
 //!
@@ -11,7 +14,9 @@
 //! let series = Series::new("Name".to_owned(), DataType::Integer);
 //! ```
 //!
-//! Alternatively, you can create a `Series` with data using a vector:
+//! Alternatively, you can create a `Series` with data [using a vector]:
+//!
+//! [using a vector]: ./struct.Series.html#method.from_vector
 //! ```
 //! use raccoon::{Series, DataEntry};
 //!
