@@ -9,3 +9,6 @@ pub mod error;
 pub mod entry;
 pub mod series;
 pub mod dataframe;
+
+pub use entry::{DataEntry, DataType};
+pub use series::Series;
