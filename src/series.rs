@@ -110,7 +110,7 @@ impl Series {
     /// A `Series` object.
     pub fn from_vector<T>(name: String, vector: Vec<T>) -> Series where T: Into<DataEntry> {
         let entries: Vec<DataEntry> = vector.into_iter().map(|x| x.into()).collect();
-        let mut data_type = DataType::Text;
+        let mut data_type = DataType::NA;
         if !entries.is_empty() {
             data_type = entries[0].data_type().clone();
         }
@@ -201,6 +201,19 @@ mod tests {
         assert_eq!(DataEntry::Integer(5), series[4usize]);
         assert_eq!(DataEntry::Integer(6), series[5usize]);
         assert_eq!(DataEntry::Integer(7), series[6usize]);
+
+        let vec: Vec<u64> = Vec::new();
+        let series = Series::from_vector("empty".to_owned(), vec);
+        assert_eq!("empty", series.name());
+        assert_eq!(&DataType::NA, series.data_type());
+    }
+
+    #[test]
+    #[should_panic(expected="index out of bounds: the len is 0 but the index is 0")]
+    fn empty_indexing() {
+        let vec: Vec<u64> = Vec::new();
+        let series = Series::from(vec);
+        let _ = &series[0_usize];
     }
 
     #[test]
