@@ -62,7 +62,7 @@ impl DataEntry {
     ///
     /// # Returns
     /// A `DataType` object.
-    pub fn get_type(&self) -> DataType {
+    pub fn data_type(&self) -> DataType {
         match self {
             DataEntry::Text(_)      => DataType::Text,
             DataEntry::Integer(_)   => DataType::Integer,
@@ -77,7 +77,8 @@ impl DataEntry {
         }
     }
 
-    /// Parse this entry into another type.
+    /// Convert this entry into another data type. Note this does not modify the initial entry itself but returns a new
+    /// entry with the desired type.
     ///
     /// # Args
     /// - `data_type`: the data type that is desired.
@@ -91,7 +92,7 @@ impl DataEntry {
     ///
     /// All types can be converted into `DataType::Boolean`, with exception of `DataType::Character`. The conversion
     /// is performed using a simple "equals 0" check for numeric values and a full parse for `DataType::Text`.
-    pub fn parse(&self, data_type: &DataType) -> DataEntry {
+    pub fn convert_to(&self, data_type: &DataType) -> DataEntry {
         match *self {
             DataEntry::Integer(int)         => {
                 match *data_type {
@@ -945,64 +946,64 @@ mod tests {
     fn getting_types() {
         let entry = DataEntry::Text("Some text".to_owned());
         assert_eq!("String", entry.internal_type());
-        assert_eq!(DataType::Text, entry.get_type());
+        assert_eq!(DataType::Text, entry.data_type());
 
         let entry = DataEntry::Integer(-353);
         assert_eq!("i32", entry.internal_type());
-        assert_eq!(DataType::Integer, entry.get_type());
+        assert_eq!(DataType::Integer, entry.data_type());
 
         let entry = DataEntry::UInteger(454);
         assert_eq!("u32", entry.internal_type());
-        assert_eq!(DataType::UInteger, entry.get_type());
+        assert_eq!(DataType::UInteger, entry.data_type());
 
         let entry = DataEntry::Long(-123_456_789);
         assert_eq!("i64", entry.internal_type());
-        assert_eq!(DataType::Long, entry.get_type());
+        assert_eq!(DataType::Long, entry.data_type());
 
         let entry = DataEntry::ULong(987_654_321);
         assert_eq!("u64", entry.internal_type());
-        assert_eq!(DataType::ULong, entry.get_type());
+        assert_eq!(DataType::ULong, entry.data_type());
 
         let entry = DataEntry::Float(-90.345);
         assert_eq!("f32", entry.internal_type());
-        assert_eq!(DataType::Float, entry.get_type());
+        assert_eq!(DataType::Float, entry.data_type());
 
         let entry = DataEntry::Double(-34532.34);
         assert_eq!("f64", entry.internal_type());
-        assert_eq!(DataType::Double, entry.get_type());
+        assert_eq!(DataType::Double, entry.data_type());
 
         let entry = DataEntry::Boolean(true);
         assert_eq!("bool", entry.internal_type());
-        assert_eq!(DataType::Boolean, entry.get_type());
+        assert_eq!(DataType::Boolean, entry.data_type());
 
         let entry = DataEntry::Character('a');
         assert_eq!("char", entry.internal_type());
-        assert_eq!(DataType::Character, entry.get_type());
+        assert_eq!(DataType::Character, entry.data_type());
 
         let entry = DataEntry::NA;
         assert_eq!("na", entry.internal_type());
-        assert_eq!(DataType::NA, entry.get_type());
+        assert_eq!(DataType::NA, entry.data_type());
     }
 
     #[test]
     fn conversion() {
         let entry = DataEntry::Integer(-42);
-        assert_eq!(DataEntry::Float(-42f32), entry.parse(&DataType::Float));
+        assert_eq!(DataEntry::Float(-42f32), entry.convert_to(&DataType::Float));
 
         let entry = DataEntry::Float(12.4);
-        assert_eq!(DataEntry::Boolean(true), entry.parse(&DataType::Boolean));
+        assert_eq!(DataEntry::Boolean(true), entry.convert_to(&DataType::Boolean));
 
         let entry = DataEntry::Integer(-42);
-        assert_eq!(DataEntry::NA, entry.parse(&DataType::UInteger));
+        assert_eq!(DataEntry::NA, entry.convert_to(&DataType::UInteger));
 
         let entry = DataEntry::Text("123.345".to_owned());
-        assert_eq!(DataEntry::Double(123.345f64), entry.parse(&DataType::Double));
+        assert_eq!(DataEntry::Double(123.345f64), entry.convert_to(&DataType::Double));
 
         let entry = DataEntry::Text("z".to_owned());
-        assert_eq!(DataEntry::Character('z'), entry.parse(&DataType::Character));
+        assert_eq!(DataEntry::Character('z'), entry.convert_to(&DataType::Character));
 
         let entry = DataEntry::Double(-42.4353f64);
-        assert_eq!(DataEntry::Integer(-42), entry.parse(&DataType::Integer));
+        assert_eq!(DataEntry::Integer(-42), entry.convert_to(&DataType::Integer));
     }
 
     #[test]

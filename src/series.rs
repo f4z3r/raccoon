@@ -39,7 +39,7 @@ impl Series {
     /// # Returns
     /// A `RaccoonResult`.
     pub fn push(&mut self, data_entry: DataEntry) -> RaccoonResult {
-        if !self.verify_type(data_entry.get_type()) {
+        if !self.verify_type(data_entry.data_type()) {
             return Err(RaccoonError::InvalidType);
         }
         self.entries.push(data_entry);
@@ -54,7 +54,7 @@ impl Series {
     /// # Returns
     /// A `RaccoonResult`.
     pub fn push_vec(&mut self, entries: Vec<DataEntry>) -> RaccoonResult {
-        if entries.iter().any(|ref x| !self.verify_type(x.get_type())) {
+        if entries.iter().any(|ref x| !self.verify_type(x.data_type())) {
             return Err(RaccoonError::InvalidType);
         }
         for item in entries {
@@ -63,16 +63,17 @@ impl Series {
         Ok(())
     }
 
-    /// Parses the datatype of the series to become the datatype given in the arguments.
+    /// Converts the series into another data type.
     ///
     /// # Args
     /// - `data_type`: the desired data type of the series.
-    pub fn parse(&mut self, data_type: &DataType) {
-        let mut parsed_entries: Vec<DataEntry> = Vec::new();
+    pub fn convert_to(&mut self, data_type: &DataType) {
+        let mut converted_entries: Vec<DataEntry> = Vec::new();
         for entry in &self.entries {
-            parsed_entries.push(entry.parse(data_type));
+            converted_entries.push(entry.convert_to(data_type));
         }
-        self.entries = parsed_entries;
+        self.entries = converted_entries;
+        self.data_type = data_type.clone();
     }
 
     /// Getter for the series' data type.
@@ -98,8 +99,42 @@ impl Series {
             true
         }
     }
+
+    /// Builds a `Series` from a vector of items.
+    ///
+    /// # Args
+    /// - `name`: the name of the series.
+    /// - `vector`: vector containing the data.
+    ///
+    /// # Returns
+    /// A `Series` object.
+    pub fn from_vector<T>(name: String, vector: Vec<T>) -> Series where T: Into<DataEntry> {
+        let entries: Vec<DataEntry> = vector.into_iter().map(|x| x.into()).collect();
+        let mut data_type = DataType::Text;
+        if !entries.is_empty() {
+            data_type = entries[0].data_type().clone();
+        }
+        Series {
+            name: name,
+            entries: entries,
+            data_type: data_type,
+        }
+    }
+
+    /// Getter for the series' name.
+    ///
+    /// # Returns
+    /// A reference to a string.
+    pub fn name(&self) -> &str {
+        &self.name
+    }
 }
 
+impl<T> From<Vec<T>> for Series where T: Into<DataEntry> {
+    fn from(vector: Vec<T>) -> Self {
+        Series::from_vector("Series1".to_owned(), vector)
+    }
+}
 
 impl Index<usize> for Series {
     type Output = DataEntry;
@@ -117,7 +152,7 @@ mod tests {
 
     #[test]
     fn create_series() {
-        let name = String::from("Dog breads");
+        let name = String::from("Dog breeds");
         let mut series = Series::new(name, DataType::Text);
         let result = series.push(DataEntry::Text("Labrador".to_owned()));
         assert!(result.is_ok());
@@ -127,10 +162,11 @@ mod tests {
         assert!(result.is_ok());
         let result = series.push(DataEntry::Integer(25));
         assert!(result.is_err());
+        assert_eq!("Dog breeds", series.name());
     }
 
     #[test]
-    fn parse_series() {
+    fn convert_series() {
         let name = String::from("Numbers");
         let mut series = Series::new(name, DataType::Text);
         let items = vec![
@@ -142,7 +178,43 @@ mod tests {
         ];
         let result = series.push_vec(items);
         assert!(result.is_ok());
-        series.parse(&DataType::UInteger);
+        series.convert_to(&DataType::UInteger);
+        assert_eq!("Numbers", series.name());
+        assert_eq!(&DataType::UInteger, series.data_type());
         assert_eq!(DataEntry::UInteger(1u32), series[0usize]);
+        assert_eq!(DataEntry::UInteger(2u32), series[1usize]);
+        assert_eq!(DataEntry::UInteger(3u32), series[2usize]);
+        assert_eq!(DataEntry::NA, series[3usize]);
+        assert_eq!(DataEntry::UInteger(4u32), series[4usize]);
+    }
+
+    #[test]
+    fn construction_from_vector() {
+        let vec = vec![1, 2, 3, 4, 5, 6, 7];
+        let series = Series::from_vector("Some series".to_owned(), vec);
+        assert_eq!("Some series", series.name());
+        assert_eq!(&DataType::Integer, series.data_type());
+        assert_eq!(DataEntry::Integer(1), series[0usize]);
+        assert_eq!(DataEntry::Integer(2), series[1usize]);
+        assert_eq!(DataEntry::Integer(3), series[2usize]);
+        assert_eq!(DataEntry::Integer(4), series[3usize]);
+        assert_eq!(DataEntry::Integer(5), series[4usize]);
+        assert_eq!(DataEntry::Integer(6), series[5usize]);
+        assert_eq!(DataEntry::Integer(7), series[6usize]);
+    }
+
+    #[test]
+    fn construction_from_trait() {
+        let vec = vec![true, false, false, true, false, true, true];
+        let series = Series::from(vec);
+        assert_eq!("Series1", series.name());
+        assert_eq!(&DataType::Boolean, series.data_type());
+        assert_eq!(DataEntry::Boolean(true), series[0usize]);
+        assert_eq!(DataEntry::Boolean(false), series[1usize]);
+        assert_eq!(DataEntry::Boolean(false), series[2usize]);
+        assert_eq!(DataEntry::Boolean(true), series[3usize]);
+        assert_eq!(DataEntry::Boolean(false), series[4usize]);
+        assert_eq!(DataEntry::Boolean(true), series[5usize]);
+        assert_eq!(DataEntry::Boolean(true), series[6usize]);
     }
 }
