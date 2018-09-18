@@ -12,3 +12,4 @@ pub mod dataframe;
 
 pub use entry::{DataEntry, DataType};
 pub use series::Series;
+pub use error::{RaccoonError, RaccoonResult};

@@ -52,7 +52,38 @@ use error::{RaccoonResult, RaccoonError};
 
 use std::ops::Index;
 
-/// A series object.
+/// A growable, named series. This tries to conform to the behaviour of python's `pandas.Series`.
+///
+/// # Examples
+/// ```
+/// use raccoon::{Series, DataType, DataEntry};
+///
+/// let mut series = Series::new("My Series".to_owned(), DataType::Double);
+/// series.push(3.45f64);
+/// series.push(67.8f64);
+///
+/// assert_eq!(series.len(), 2);
+/// assert_eq!(series[0], DataEntry::Double(3.45));
+///
+/// series.push_vec(vec![2.0f64, 2.1, 2.2, 2.3]);
+/// ```
+///
+/// In general, this can be seen as a special type of vector, allowing aggregate operations. However, one major
+/// major difference, is the fact that a `Series` **cannot be indexed mutably**. Hence code such as the following will
+/// cause a compilation error:
+/// ```ignore
+/// let mut series = Series::from(vec![1, 2, 3]);
+/// series[0] = 5;          // compile time error
+/// ```
+/// The reason for prohibiting mutable indexing is to ensure data type integrity. Code such as the following would
+/// otherwise run without problems:
+/// ```ignore
+/// // creating a series containing boolean values
+/// let mut series = Series::from(vec![true, false, true]);
+///
+/// // setting the second value to an integer
+/// series[1] = DataEntry::Integer(32);     // should NOT be allowed!!
+/// ```
 #[derive(Debug, Clone)]
 pub struct Series {
     name: String,
@@ -61,14 +92,16 @@ pub struct Series {
 }
 
 impl Series {
-    /// Constructor. This creates an empty series of the given data type.
+    /// Constructs a new, empty `Series` with the specified name and data type.
     ///
-    /// # Arguments
-    /// - `name`: the name of the series.
-    /// - `data_type`: the data type of the series.
+    /// # Example
+    /// ```
+    /// use raccoon::{Series, DataType};
     ///
-    /// # Returns
-    /// A empty `Series` object.
+    /// let series = Series::new("My Series".to_owned(), DataType::Float);
+    /// assert!(series.is_empty());
+    /// assert_eq!("My Series", series.name());
+    /// ```
     pub fn new(name: String, data_type: DataType) -> Series {
         Series {
             name: name,
@@ -77,15 +110,60 @@ impl Series {
         }
     }
 
-    /// Append a data entry to the series. This returns an error if the data type of the entry does not match the
-    /// series' data type. This uses type inference and might fail if the wrong internal type is used. For instance
-    /// passing `1` to a series using `DataType::UInteger` will fail as the argument has type `i32` and not `u32`.
+    /// Constructs a new, empty `Series` with the specified name, data type, and capacity.
     ///
-    /// # Arguments
-    /// - `data`: the data to append to the series.
+    /// The series will be able to hold exactly `capacity` elements without reallocating. It is important to note that
+    /// although the returned series will have the _capacity_ specified, the series will have zero length. See Rust's
+    /// documentation of `std::vec::Vec<T>` for the difference between length and capacity.
     ///
-    /// # Returns
-    /// A `RaccoonResult`.
+    /// # Example
+    /// ```
+    /// use raccoon::{Series, DataType, DataEntry};
+    ///
+    /// let mut series = Series::with_capacity("series1".to_owned(), DataType::Integer, 10);
+    ///
+    /// // the series contain no items even though it has capacity for more
+    /// assert!(series.is_empty());
+    ///
+    /// // these are all done without reallocation
+    /// for i in 0i32..10i32 {
+    ///     series.push(i);
+    /// }
+    ///
+    /// // ... but this may make the series reallocate
+    /// series.push(11);
+    /// ```
+    pub fn with_capacity(name: String, data_type: DataType, capacity: usize) -> Series {
+        Series {
+            name: name,
+            entries: Vec::with_capacity(capacity),
+            data_type: data_type
+        }
+    }
+
+    /// Append a data entry to the series.
+    ///
+    /// As this uses type inference to add the data entry, ensure the append occured. `data` must match the internal
+    /// type used by the series.
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::{Series, DataType, DataEntry};
+    /// // using `i32` to create the series
+    /// let mut series = Series::from(vec![0, 1, 2, 3]);
+    ///
+    /// // ... hence the type is `DataType::Integer`
+    /// assert_eq!(series.data_type(), &DataType::Integer);
+    ///
+    /// // works
+    /// let result = series.push(4);
+    /// assert!(result.is_ok());
+    /// assert_eq!(series[4], DataEntry::Integer(4));
+    ///
+    /// // fails
+    /// let result = series.push(5.0);      // f32
+    /// assert!(result.is_err());
+    /// ```
     pub fn push<T>(&mut self, data: T) -> RaccoonResult where T: Into<DataEntry> {
         let data_entry: DataEntry = data.into();
         self.push_entry(data_entry)
@@ -136,6 +214,16 @@ impl Series {
             self.entries.push(item);
         }
         Ok(())
+    }
+
+    /// Pops an entry from the end of the series.
+    pub fn pop_entry(&mut self) -> Option<DataEntry> {
+        self.entries.pop()
+    }
+
+    /// Returns the length of the series.
+    pub fn len(&self) -> usize {
+        self.entries.len()
     }
 
     /// Converts the series into another data type.
@@ -211,6 +299,11 @@ impl Series {
     pub fn set_name(&mut self, name: String) {
         self.name = name;
     }
+
+    /// Checks if the series is empty.
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
 }
 
 impl<T> From<Vec<T>> for Series where T: Into<DataEntry> {
@@ -246,6 +339,7 @@ mod tests {
         let result = series.push_entry(DataEntry::Integer(25));
         assert!(result.is_err());
         assert_eq!("Dog breeds", series.name());
+        assert_eq!(3, series.len());
     }
 
     #[test]
@@ -284,6 +378,18 @@ mod tests {
         assert_eq!(DataEntry::Integer(3i32), series[3usize]);
         let result = series.push(true);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn pop_items() {
+        let mut series = Series::from(vec![1, 2, 3, 4]);
+        assert_eq!(Some(DataEntry::Integer(4i32)), series.pop_entry());
+        assert_eq!(Some(DataEntry::Integer(3i32)), series.pop_entry());
+        assert_eq!(Some(DataEntry::Integer(2i32)), series.pop_entry());
+        assert_eq!(Some(DataEntry::Integer(1i32)), series.pop_entry());
+        assert_eq!(None, series.pop_entry());
+        assert_eq!(None, series.pop_entry());
+        assert!(series.is_empty());
     }
 
     #[test]
@@ -329,5 +435,6 @@ mod tests {
         assert_eq!(DataEntry::Boolean(false), series[4usize]);
         assert_eq!(DataEntry::Boolean(true), series[5usize]);
         assert_eq!(DataEntry::Boolean(true), series[6usize]);
+        assert_eq!(7, series.len());
     }
 }
