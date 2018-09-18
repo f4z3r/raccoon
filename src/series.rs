@@ -169,28 +169,53 @@ impl Series {
         self.push_entry(data_entry)
     }
 
-    /// Append a data vector to the series. This returns an error if the data type of the entry does not match the
-    /// series' data type. This uses type inference and might fail if the wrong internal type is used. For instance
-    /// passing `vec![1]` to a series using `DataType::UInteger` will fail as the argument has type `i32` and not `u32`.
+    /// Extend the series by a data vector.
     ///
-    /// # Arguments
-    /// - `vector`: data vector to append to the series.
+    /// As this uses type inference to add the data entry, ensure the append occured. `data` must match the internal
+    /// type used by the series.
+    /// # Example
+    /// ```
+    /// # use raccoon::{Series, DataType, DataEntry};
+    /// // using `i32` to create the series
+    /// let mut series = Series::from(vec![0, 1, 2, 3]);
     ///
-    /// # Returns
-    /// A `RaccoonResult`.
+    /// // ... hence the type is `DataType::Integer`
+    /// assert_eq!(series.data_type(), &DataType::Integer);
+    ///
+    /// // works
+    /// let result = series.push_vec(vec![4, 5, 6]);
+    /// assert!(result.is_ok());
+    /// assert_eq!(series[6], DataEntry::Integer(6));
+    ///
+    /// // fails
+    /// let result = series.push_vec(vec![3.4, 5.6, 1.2]);      // f32
+    /// assert!(result.is_err());
+    /// ```
     pub fn push_vec<T>(&mut self, vector: Vec<T>) -> RaccoonResult where T: Into<DataEntry> {
         let entries: Vec<DataEntry> = vector.into_iter().map(|x| x.into()).collect();
         self.push_entry_vec(entries)
     }
 
-    /// Append a data entry to the series. This returns an error if the data type of the entry does not match the
-    /// series' data type.
+    /// Append a `DataEntry` object to the series.
     ///
-    /// # Arguments
-    /// - `data_entry`: the data entry to append to the series.
+    /// # Example
+    /// ```
+    /// # use raccoon::{Series, DataType, DataEntry};
+    /// // using `i32` to create the series
+    /// let mut series = Series::from(vec![0, 1, 2, 3]);
     ///
-    /// # Returns
-    /// A `RaccoonResult`.
+    /// // ... hence the type is `DataType::Integer`
+    /// assert_eq!(series.data_type(), &DataType::Integer);
+    ///
+    /// // works
+    /// let result = series.push_entry(DataEntry::Integer(4));
+    /// assert!(result.is_ok());
+    /// assert_eq!(series[4], DataEntry::Integer(4));
+    ///
+    /// // fails
+    /// let result = series.push(DataEntry::Float(5.0));
+    /// assert!(result.is_err());
+    /// ```
     pub fn push_entry(&mut self, data_entry: DataEntry) -> RaccoonResult {
         if !self.verify_type(data_entry.data_type()) {
             return Err(RaccoonError::InvalidType);
@@ -199,13 +224,36 @@ impl Series {
         Ok(())
     }
 
-    /// Same as `push_entry` but takes a vector as an argument.
+    /// Append a `DataEntry` vector to the series.
     ///
-    /// # Arguments
-    /// - `vector`: the vector of `DataEntry` you want to append to the series.
+    /// # Example
+    /// ```
+    /// # use raccoon::{Series, DataType, DataEntry};
+    /// // using `i32` to create the series
+    /// let mut series = Series::from(vec![0, 1, 2, 3]);
     ///
-    /// # Returns
-    /// A `RaccoonResult`.
+    /// // ... hence the type is `DataType::Integer`
+    /// assert_eq!(series.data_type(), &DataType::Integer);
+    ///
+    /// // works
+    /// let vector = vec![
+    ///     DataEntry::Integer(4),
+    ///     DataEntry::Integer(5),
+    ///     DataEntry::Integer(6),
+    /// ];
+    /// let result = series.push_entry_vec(vector);
+    /// assert!(result.is_ok());
+    /// assert_eq!(series[6], DataEntry::Integer(6));
+    ///
+    /// // fails
+    /// let vector = vec![
+    ///     DataEntry::Float(3.4),
+    ///     DataEntry::Float(5.6),
+    ///     DataEntry::Float(1.2),
+    /// ];
+    /// let result = series.push_entry_vec(vector);
+    /// assert!(result.is_err());
+    /// ```
     pub fn push_entry_vec(&mut self, vector: Vec<DataEntry>) -> RaccoonResult {
         if vector.iter().any(|ref x| !self.verify_type(x.data_type())) {
             return Err(RaccoonError::InvalidType);
@@ -217,19 +265,82 @@ impl Series {
     }
 
     /// Pops an entry from the end of the series.
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::{Series, DataType, DataEntry};
+    /// let mut series = Series::new("series1".to_owned(), DataType::Boolean);
+    /// series.push(true);
+    ///
+    /// assert_eq!(1, series.len());
+    /// let result = series.pop_entry();
+    /// assert_eq!(Some(DataEntry::Boolean(true)), result);
+    ///
+    /// assert!(series.is_empty());
+    /// let result = series.pop_entry();
+    /// assert_eq!(None, result);
+    /// ```
     pub fn pop_entry(&mut self) -> Option<DataEntry> {
         self.entries.pop()
     }
 
     /// Returns the length of the series.
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::Series;
+    /// let series = Series::from(vec![1, 2, 3]);
+    /// assert_eq!(3, series.len())
+    /// ```
     pub fn len(&self) -> usize {
         self.entries.len()
     }
 
     /// Converts the series into another data type.
     ///
-    /// # Arguments
-    /// - `data_type`: the desired data type of the series.
+    /// Note that some data types cannot be converted into one another as the conversion makes no sense. This results in
+    /// `DataType::NA` entries. The conversion from numerical types into boolean values is performed by checking
+    /// equality with 0.
+    ///
+    /// # Conversions that result in `DataType::NA`
+    /// - `DataType::Text` into another type that cannot be parsed into another type using `String::from()`. For example
+    ///   the conversion shown in the third example of this docstring.
+    /// - `DataType::Character` into `DataType::Boolean`.
+    /// - Anything except `DataType::Text` into `DataType::Character`. This can be somewhat circumvented by converting
+    ///   to `DataType::Text` and then into `DataType::Character`.
+    /// - Any signed numerical type into an unsigned one.
+    /// - `DataType::Long` into `DataType::Integer`.
+    /// - `DataType::ULong` into `DataType::UInteger`.
+    ///
+    /// # Examples
+    /// A working conversion:
+    /// ```
+    /// # use raccoon::{Series, DataType};
+    /// let mut series = Series::from(vec![true, true, false, true]);
+    /// series.convert_to(&DataType::Integer);
+    /// assert_eq!(series, vec![1, 1, 0, 1]);
+    /// ```
+    ///
+    /// A working yet lossy conversion:
+    /// ```
+    /// # use raccoon::{Series, DataType};
+    /// // build double precision floating point series
+    /// let mut series = Series::from(vec![123.456f64, 456.789f64]);
+    /// assert_eq!(series.data_type(), &DataType::Double);
+    ///
+    /// // convert to single precision floating point
+    /// series.convert_to(&DataType::Float);
+    /// assert_eq!(series.data_type(), &DataType::Float);
+    /// assert_eq!(series, vec![123.456f32, 456.789f32]);
+    /// ```
+    ///
+    /// A conversion that makes no sense:
+    /// ```
+    /// # use raccoon::{Series, DataType, DataEntry};
+    /// let mut series = Series::from(vec!["some", "random", "words"]);
+    /// series.convert_to(&DataType::Character);
+    /// assert_eq!(series, vec![DataEntry::NA, DataEntry::NA, DataEntry::NA]);
+    /// ```
     pub fn convert_to(&mut self, data_type: &DataType) {
         let mut converted_entries: Vec<DataEntry> = Vec::new();
         for entry in &self.entries {
@@ -241,20 +352,20 @@ impl Series {
 
     /// Getter for the series' data type.
     ///
-    /// # Returns
-    /// A reference to the `DataType` of the series.
+    /// # Example
+    /// ```
+    /// # use raccoon::{Series, DataType};
+    /// let series = Series::new("my series".to_owned(), DataType::ULong);
+    /// assert_eq!(series.data_type(), &DataType::ULong);
+    /// ```
     pub fn data_type(&self) -> &DataType {
         &self.data_type
     }
 
     /// Verifies the validity of the datatype. This checks if a given data type is conform to this series.
     ///
-    /// # Arguments
-    /// - `data_type`: the data type we want to check for validity.
-    ///
-    /// # Returns
-    /// A `bool` indicating the validity (i.e. if `true`, entries of that type can be safely added to the series; if
-    /// `false`, it is not safe).
+    /// In other words, this will return `true` if `data_type` is `DataType::NA` or equal to the data type of the
+    /// series.
     fn verify_type(&self, data_type: DataType) -> bool {
         if data_type != self.data_type && data_type != DataType::NA {
             false
@@ -263,14 +374,15 @@ impl Series {
         }
     }
 
-    /// Builds a `Series` from a vector of items.
+    /// Builds a `Series` from a vector of items and gives the series a name.
     ///
-    /// # Arguments
-    /// - `name`: the name of the series.
-    /// - `vector`: vector containing the data.
-    ///
-    /// # Returns
-    /// A `Series` object.
+    /// # Example
+    /// ```
+    /// # use raccoon::Series;
+    /// let series = Series::from_vector("my series".to_owned(), vec![1, 2, 3]);
+    /// assert_eq!(series.name(), "my series");
+    /// assert_eq!(series, vec![1, 2, 3]);
+    /// ```
     pub fn from_vector<T>(name: String, vector: Vec<T>) -> Series where T: Into<DataEntry> {
         let entries: Vec<DataEntry> = vector.into_iter().map(|x| x.into()).collect();
         let mut data_type = DataType::NA;
@@ -286,21 +398,42 @@ impl Series {
 
     /// Getter for the series' name.
     ///
-    /// # Returns
-    /// A reference to a string.
+    /// # Example
+    /// ```
+    /// # use raccoon::{Series, DataType};
+    /// let series = Series::new("custom name".to_owned(), DataType::Character);
+    /// assert_eq!(series.name(), "custom name");
+    /// ```
     pub fn name(&self) -> &str {
         &self.name
     }
 
     /// Setter for the series' name.
     ///
-    /// # Arguments
-    /// - `name`: the new name for the series.
+    /// # Example
+    /// ```
+    /// # use raccoon::Series;
+    /// let mut series = Series::from(vec!['a', 'b', 'c']);
+    /// assert_eq!(series.name(), "Series1");
+    ///
+    /// // change name
+    /// series.set_name("custom name".to_owned());
+    /// assert_eq!(series.name(), "custom name");
     pub fn set_name(&mut self, name: String) {
         self.name = name;
     }
 
     /// Checks if the series is empty.
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::{Series, DataType};
+    /// let mut series = Series::new("City".to_owned(), DataType::Text);
+    /// assert!(series.is_empty());
+    ///
+    /// series.push("Zürich");
+    /// assert!(!series.is_empty());
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
@@ -317,6 +450,30 @@ impl Index<usize> for Series {
 
     fn index(&self, idx: usize) -> &Self::Output {
         &self.entries[idx]
+    }
+}
+
+impl PartialEq for Series {
+    fn eq(&self, other: &Series) -> bool {
+        if self.name == other.name && self.data_type == other.data_type && self.entries.len() == other.entries.len() {
+            if self.entries.iter().zip(other.entries.iter()).all(|(ref x1, ref x2)| { x1 == x2 }) {
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
+}
+
+impl<T> PartialEq<Vec<T>> for Series where DataEntry: From<T>, T: Clone {
+    fn eq(&self, other: &Vec<T>) -> bool {
+        if self.entries.iter().zip(other.iter()).all(|(x1, x2)| { *x1 == DataEntry::from(x2.clone()) }) {
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -436,5 +593,18 @@ mod tests {
         assert_eq!(DataEntry::Boolean(true), series[5usize]);
         assert_eq!(DataEntry::Boolean(true), series[6usize]);
         assert_eq!(7, series.len());
+    }
+
+    #[test]
+    fn comparisions() {
+        let series1 = Series::from(vec![1, 2, 3, 4]);
+        assert_eq!(series1, vec![1, 2, 3, 4]);
+        let series2 = Series::from(vec![1, 2, 3, 4]);
+        assert_eq!(series1, series2);
+        let mut series3 = Series::from(vec![1, 2, 3, 4]);
+        series3.set_name("some random name".to_owned());
+        assert_ne!(series1, series3);
+        let series4 = Series::from(vec![1.0, 2.0, 3.0, 4.0]);
+        assert_ne!(series1, series4);
     }
 }

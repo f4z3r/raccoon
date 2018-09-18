@@ -1,4 +1,10 @@
 //! A library aiming at facilitating handling of large amounts of data.
+//!
+//! # ATTENTION
+//! This is a work in progress is **not at all stable**. I am a student developing this as a hobby and to get a better
+//! grasp of Rust.
+//!
+//! Use in production code at your own risk.
 
 #![deny(missing_docs)]
 

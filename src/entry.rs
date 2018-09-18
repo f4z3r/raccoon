@@ -1,21 +1,68 @@
-//! `entry` module. Contains all code related to data entries.
+//! A cell-like entity that can store the most common primitives.
+//!
+//! `DataEntry` is usually used in conjonction with `Series`. By itself the entry has not much use. The `DataType`
+//! enumeration provides the type of a `DataEntry`.
+//!
+//! # Note on Memory Efficiency
+//! Due to the way Rust allocates memory for `enum`s, the size of a single `DataEntry` will be equal to the largest data
+//! contained in the `enum`, which in this case is the `String` pointer (3 times the size of `usize`). Hence using
+//! `DataEntry::Integer(-32)` or `DataEntry::Long(-32)` will make no difference in the memory used by Rust. The same
+//! counts for `DataEntry::Float` and `DataEntry::Double`.
+//!
+//! The smaller types are only included for completeness sake and size they are the default integer and floating point
+//! sizes used by Rust. However, using 32 bit numericals will not reduce the memory footprint if a `DataEntry`. This is
+//! also why numerical types smaller than 32 bits are not supported. It is therefore encouraged to use 64 bit numerals
+//! as they provide more precision or larger max/min values.
+//!
+//!
+//! # Examples
+//! Creating a `DataEntry` like any other Rust `enum`:
+//! ```
+//! use raccoon::DataEntry;
+//!
+//! let _entry = DataEntry::ULong(123_456_789_987u64);
+//! ```
+//!
+//! Converting a `DataEntry` into another `DataType`:
+//! ```
+//! use raccoon::{DataType, DataEntry};
+//!
+//! let entry = DataEntry::from(true);
+//! assert_eq!(entry.data_type(), DataType::Boolean);
+//!
+//! let new_entry = entry.convert_to(&DataType::Text);
+//! assert_eq!(new_entry, DataEntry::Text("true".to_owned()));
+//! ```
+//!
+//! Recovering the data type of a series:
+//! ```
+//! use raccoon::{Series, DataType};
+//!
+//! let series = Series::from(vec!['a', 'b', 'c']);
+//! let data_type = series.data_type();
+//! assert_eq!(data_type, &DataType::Character);
+//! ```
 
 use std::ops::{Add, Sub, Div, Mul};
 
-/// A data entry.
+/// A cell-like data entry. Note that `DataEntry::Integer`, `DataEntry::UInteger`, and `DataEntry::Float`, are only
+/// added for convenience. Due to how Rust `enum`s are stored, using a `DataEntry::Integer` does not actually reduce
+/// the memory footprint versus `DataEntry::Long`.
+///
+/// See `raccoon::entry` for more details on memory efficiency.
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum DataEntry {
     /// A text entry.
     Text(String),
-    /// An integer entry (default for whole decimals).
+    /// An integer entry.
     Integer(i32),
-    /// An unsigned integer entry (default for whole unsigned decimals).
+    /// An unsigned integer entry.
     UInteger(u32),
     /// A long entry.
     Long(i64),
     /// An unsigned long entry.
     ULong(u64),
-    /// A floating point entry (default for decimal entries).
+    /// A floating point entry.
     Float(f32),
     /// A double precision floating point entry.
     Double(f64),
@@ -23,7 +70,7 @@ pub enum DataEntry {
     Boolean(bool),
     /// A character entry.
     Character(char),
-    /// A missing entry
+    /// A missing or invalid entry.
     NA
 }
 
@@ -41,8 +88,25 @@ impl DataEntry {
     /// - `char`,
     /// - `na`.
     ///
-    /// # Returns
-    /// One of the above as a string reference.
+    /// # Examples
+    /// ```
+    /// # use raccoon::DataEntry;
+    /// let entry = DataEntry::Text("some text".to_owned());
+    /// assert_eq!(entry.internal_type(), "String");
+    ///
+    /// let entry = DataEntry::Character('a');
+    /// assert_eq!(entry.internal_type(), "char");
+    ///
+    /// let entry = DataEntry::Integer(-234);
+    /// assert_eq!(entry.internal_type(), "i32");
+    /// ```
+    ///
+    /// Note that the internal type does not always correspond with the constructing type:
+    /// ```
+    /// # use raccoon::DataEntry;
+    /// let entry = DataEntry::from(2u8);
+    /// assert_eq!(entry.internal_type(), "u32");
+    /// ```
     pub fn internal_type(&self) -> &str {
         match self {
             DataEntry::Text(_)      => "String",
@@ -58,10 +122,17 @@ impl DataEntry {
         }
     }
 
-    /// Retrieves the type of the entry.
+    /// Retrieves the type of the entry as a `DataType`.
     ///
-    /// # Returns
-    /// A `DataType` object.
+    /// # Example
+    /// ```
+    /// # use raccoon::{DataEntry, DataType};
+    /// let entry = DataEntry::from(true);
+    /// assert_eq!(entry.data_type(), DataType::Boolean);
+    ///
+    /// let entry = DataEntry::from(-2i8);
+    /// assert_eq!(entry.data_type(), DataType::Integer);
+    /// ```
     pub fn data_type(&self) -> DataType {
         match self {
             DataEntry::Text(_)      => DataType::Text,
@@ -80,18 +151,49 @@ impl DataEntry {
     /// Convert this entry into another data type. Note this does not modify the initial entry itself but returns a new
     /// entry with the desired type.
     ///
-    /// # Args
-    /// - `data_type`: the data type that is desired.
+    /// Note that some data types cannot be converted into one another as the conversion makes no sense. This results in
+    /// `DataType::NA` entries. The conversion from numerical types into boolean values is performed by checking
+    /// equality with 0.
     ///
-    /// # Returns
-    /// A new `DataEntry`. Lossy conversions that reduce precision are allowed (e.g. `DataType::Float` to
-    /// `DataType::Integer`). However, conversions from signed to unsigned numericals will return `DataEntry::NA` (e.g.
-    /// `DataType::Long` to `DataType::UInteger`).
+    /// # Conversions that result in `DataType::NA`
+    /// - `DataType::Text` into another type that cannot be parsed into another type using `String::from()`. For example
+    ///   the conversion shown in the third example of this docstring.
+    /// - `DataType::Character` into `DataType::Boolean`.
+    /// - Anything except `DataType::Text` into `DataType::Character`. This can be somewhat circumvented by converting
+    ///   to `DataType::Text` and then into `DataType::Character`.
+    /// - Any signed numerical type into an unsigned one.
+    /// - `DataType::Long` into `DataType::Integer`.
+    /// - `DataType::ULong` into `DataType::UInteger`.
     ///
-    /// Moreover, no type can be converted to `DataType::Character` except for entries having type `DataType::Text`.
+    /// # Examples
+    /// A working conversion:
+    /// ```
+    /// # use raccoon::{DataEntry, DataType};
+    /// let entry = DataEntry::from(true);
+    /// let new_entry = entry.convert_to(&DataType::Integer);
+    /// assert_eq!(new_entry, DataEntry::Integer(1));
+    /// ```
     ///
-    /// All types can be converted into `DataType::Boolean`, with exception of `DataType::Character`. The conversion
-    /// is performed using a simple "equals 0" check for numeric values and a full parse for `DataType::Text`.
+    /// A working yet lossy conversion:
+    /// ```
+    /// # use raccoon::{DataEntry, DataType};
+    /// // build double precision floating point DataEntry
+    /// let entry = DataEntry::from(123.456f64);
+    /// assert_eq!(entry.data_type(), DataType::Double);
+    ///
+    /// // convert to single precision floating point
+    /// let new_entry = entry.convert_to(&DataType::Float);
+    /// assert_eq!(new_entry.data_type(), DataType::Float);
+    /// assert_eq!(new_entry, DataEntry::Float(123.456f32));
+    /// ```
+    ///
+    /// A conversion that makes no sense:
+    /// ```
+    /// # use raccoon::{DataType, DataEntry};
+    /// let entry = DataEntry::from("word");
+    /// let new_entry = entry.convert_to(&DataType::Character);
+    /// assert_eq!(new_entry, DataEntry::NA);
+    /// ```
     pub fn convert_to(&self, data_type: &DataType) -> DataEntry {
         match *self {
             DataEntry::Integer(int)         => {
