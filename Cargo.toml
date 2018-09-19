@@ -12,4 +12,3 @@ readme = "README.md"
 keywords = ["pandas", "dataframe", "series"]
 
 [dependencies]
-quick-error = "1.2.2"
