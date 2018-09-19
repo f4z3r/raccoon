@@ -60,6 +60,72 @@ pub enum DCell {
     NA
 }
 
+impl DCell {
+    /// Determine if the `DCell` is of type `DType::NA`
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::prelude::*;
+    /// let mut cell = DCell::Int(89);
+    /// cell += true;
+    /// assert!(cell.is_nan());
+    /// ```
+    pub fn is_nan(&self) -> bool {
+        match self {
+            DCell::NA   => true,
+            _           => false
+        }
+    }
+
+    /// Parse a `DCell` from a `&str`.
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::prelude::*;
+    /// let cell = DCell::from_str("54");
+    /// assert_eq!(cell, DCell::UInt(54u64));
+    ///
+    /// let cell = DCell::from_str("-123");
+    /// assert_eq!(cell, DCell::Int(-123i64));
+    ///
+    /// let cell = DCell::from_str("90.87");
+    /// assert_eq!(cell, DCell::Float(90.87f64));
+    ///
+    /// let cell = DCell::from_str("true");
+    /// assert_eq!(cell, DCell::Bool(true));
+    ///
+    /// let cell = DCell::from_str("a");
+    /// assert_eq!(cell, DCell::Char('a'));
+    ///
+    /// let cell = DCell::from_str("some random text");
+    /// assert_eq!(cell, DCell::Text("some random text".to_owned()));
+    /// ```
+    pub fn from_str<S>(val: S) -> DCell where S: Into<String> {
+        let val: String = val.into();
+        if let Some(int) = val.parse::<u64>().ok() {
+            return DCell::UInt(int);
+        }
+
+        if let Some(int) = val.parse::<i64>().ok() {
+            return DCell::Int(int);
+        }
+
+        if let Some(float) = val.parse::<f64>().ok() {
+            return DCell::Float(float);
+        }
+
+        if let Some(b) = val.parse::<bool>().ok() {
+            return DCell::Bool(b);
+        }
+
+        if let Some(ch) = val.parse::<char>().ok() {
+            return DCell::Char(ch);
+        }
+
+        DCell::Text(val)
+    }
+}
+
 /// A data type.
 #[derive(Debug, Clone, PartialEq)]
 pub enum DType {
@@ -76,7 +142,9 @@ pub enum DType {
     /// Text.
     Text,
     /// Missing or invalid.
-    NA
+    NA,
+    /// Mixed
+    Mixed
 }
 
 impl ToString for DCell {
