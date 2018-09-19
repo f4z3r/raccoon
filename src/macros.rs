@@ -29,3 +29,27 @@ macro_rules! from_trait_for_float {
         }
     }
 }
+
+macro_rules! typed_trait_for_int {
+    ($type:ty) => {
+        impl Typed for $type {
+            fn dtype(&self) -> DType { DType::Int }
+        }
+    }
+}
+
+macro_rules! typed_trait_for_uint {
+    ($type:ty) => {
+        impl Typed for $type {
+            fn dtype(&self) -> DType { DType::UInt }
+        }
+    }
+}
+
+macro_rules! typed_trait_for_float {
+    ($type:ty) => {
+        impl Typed for $type {
+            fn dtype(&self) -> DType { DType::Float }
+        }
+    }
+}

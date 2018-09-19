@@ -100,7 +100,7 @@ impl DCell {
     /// let cell = DCell::from_str("some random text");
     /// assert_eq!(cell, DCell::Text("some random text".to_owned()));
     /// ```
-    pub fn from_str<S>(val: S) -> DCell where S: Into<String> {
+    pub fn from_str<T>(val: T) -> DCell where T: Into<String> {
         let val: String = val.into();
         if let Some(int) = val.parse::<u64>().ok() {
             return DCell::UInt(int);
@@ -124,27 +124,6 @@ impl DCell {
 
         DCell::Text(val)
     }
-}
-
-/// A data type.
-#[derive(Debug, Clone, PartialEq)]
-pub enum DType {
-    /// Integer.
-    Int,
-    /// Unsigned integer.
-    UInt,
-    /// Float.
-    Float,
-    /// Character
-    Char,
-    /// Boolean.
-    Bool,
-    /// Text.
-    Text,
-    /// Missing or invalid.
-    NA,
-    /// Mixed
-    Mixed
 }
 
 impl ToString for DCell {
@@ -171,6 +150,39 @@ impl Typed for DCell {
             DCell::Bool(_)  => DType::Bool,
             DCell::Text(_)  => DType::Text,
             DCell::NA       => DType::NA,
+        }
+    }
+}
+
+impl AsType for DCell {
+    fn astype(&mut self, dtype: DType) {
+        *self = match (self.clone(), dtype) {
+            (DCell::Int(int), DType::Int)       => DCell::Int(int),
+            (DCell::Float(f), DType::Int)       => DCell::Int(f as i64),
+            (DCell::Bool(b), DType::Int)        => DCell::Int(b as i64),
+            (DCell::Text(txt), DType::Int)      => if let Some(int) = txt.parse::<i64>().ok() { DCell::Int(int) } else { DCell::NA },
+            (DCell::UInt(int), DType::UInt)     => DCell::UInt(int),
+            (DCell::Bool(b), DType::UInt)       => DCell::UInt(b as u64),
+            (DCell::Text(txt), DType::UInt)     => if let Some(int) = txt.parse::<u64>().ok() { DCell::UInt(int) } else { DCell::NA },
+            (DCell::Int(int), DType::Float)     => DCell::Float(int as f64),
+            (DCell::UInt(int), DType::Float)    => DCell::Float(int as f64),
+            (DCell::Float(f), DType::Float)     => DCell::Float(f),
+            (DCell::Bool(b), DType::Float)      => DCell::Float(b as u8 as f64),
+            (DCell::Text(txt), DType::Float)    => if let Some(f) = txt.parse::<f64>().ok() { DCell::Float(f) } else { DCell::NA },
+            (DCell::Int(int), DType::Bool)      => DCell::Bool(int != 0i64),
+            (DCell::UInt(int), DType::Bool)     => DCell::Bool(int != 0u64),
+            (DCell::Float(f), DType::Bool)      => DCell::Bool(f != 0f64),
+            (DCell::Bool(b), DType::Bool)       => DCell::Bool(b),
+            (DCell::Text(txt), DType::Bool)     => if let Some(b) = txt.parse::<bool>().ok() { DCell::Bool(b) } else { DCell::NA },
+            (DCell::Char(ch), DType::Char)      => DCell::Char(ch),
+            (DCell::Text(txt), DType::Char)     => if let Some(ch) = txt.parse::<char>().ok() { DCell::Char(ch) } else { DCell::NA },
+            (DCell::Text(txt), DType::Text)     => DCell::Text(txt),
+            (DCell::Int(int), DType::Text)      => DCell::Text(int.to_string()),
+            (DCell::UInt(int), DType::Text)     => DCell::Text(int.to_string()),
+            (DCell::Float(f), DType::Text)      => DCell::Text(f.to_string()),
+            (DCell::Bool(b), DType::Text)       => DCell::Text(b.to_string()),
+            (DCell::Char(ch), DType::Text)      => DCell::Text(ch.to_string()),
+            _                                   => DCell::NA
         }
     }
 }
@@ -389,5 +401,81 @@ impl TryFrom<DCell> for String {
 
     fn try_from(val: DCell) -> Result<Self, Self::Error> {
         if let DCell::Text(txt) = val { Ok(txt) } else { Err(RaccoonError::ConversionError) }
+    }
+}
+
+
+/// A data type.
+#[derive(Debug, Clone, PartialEq)]
+pub enum DType {
+    /// Integer.
+    Int,
+    /// Unsigned integer.
+    UInt,
+    /// Float.
+    Float,
+    /// Character
+    Char,
+    /// Boolean.
+    Bool,
+    /// Text.
+    Text,
+    /// Missing or invalid.
+    NA,
+    /// Mixed
+    Mixed
+}
+
+impl ToString for DType {
+    fn to_string(&self) -> String {
+        match self {
+            DType::Int      => String::from("Integer"),
+            DType::UInt     => String::from("Unsigned Integer"),
+            DType::Float    => String::from("Floating Point Number"),
+            DType::Bool     => String::from("Boolean"),
+            DType::Char     => String::from("Character"),
+            DType::Text     => String::from("Text"),
+            DType::NA       => String::from("Invalid/Missing"),
+            DType::Mixed    => String::from("Mixed"),
+        }
+    }
+}
+
+impl Typed for DType {
+    fn dtype(&self) -> DType {
+        self.clone()
+    }
+}
+
+impl AsType for DType {
+    fn astype(&mut self, dtype: DType) {
+        *self = match (self.clone(), dtype) {
+            (DType::Int, DType::Int)        => DType::Int,
+            (DType::Float, DType::Int)      => DType::Int,
+            (DType::Bool, DType::Int)       => DType::Int,
+            (DType::Text, DType::Int)       => DType::Mixed,
+            (DType::UInt, DType::UInt)      => DType::UInt,
+            (DType::Bool, DType::UInt)      => DType::UInt,
+            (DType::Text, DType::UInt)      => DType::Mixed,
+            (DType::Int, DType::Float)      => DType::Float,
+            (DType::UInt, DType::Float)     => DType::Float,
+            (DType::Float, DType::Float)    => DType::Float,
+            (DType::Bool, DType::Float)     => DType::Float,
+            (DType::Text, DType::Float)     => DType::Mixed,
+            (DType::Int, DType::Bool)       => DType::Bool,
+            (DType::UInt, DType::Bool)      => DType::Bool,
+            (DType::Float, DType::Bool)     => DType::Bool,
+            (DType::Bool, DType::Bool)      => DType::Bool,
+            (DType::Text, DType::Bool)      => DType::Mixed,
+            (DType::Char, DType::Char)      => DType::Char,
+            (DType::Text, DType::Char)      => DType::Mixed,
+            (DType::Text, DType::Text)      => DType::Text,
+            (DType::Int, DType::Text)       => DType::Text,
+            (DType::UInt, DType::Text)      => DType::Text,
+            (DType::Float, DType::Text)     => DType::Text,
+            (DType::Bool, DType::Text)      => DType::Text,
+            (DType::Char, DType::Text)      => DType::Text,
+            _                               => DType::NA
+        }
     }
 }

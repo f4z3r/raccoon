@@ -2,7 +2,6 @@
 
 use prelude::*;
 
-use std::fmt::Debug;
 use std::ops::{Index, IndexMut};
 
 /// A growable, named series with a strict data type.
@@ -21,6 +20,20 @@ pub struct Series {
 
 
 impl SeriesLike for Series {
+    fn new<T, U>(name: T, vector: Vec<U>) -> Self where T: Into<String>, U: Into<DCell> + Typed {
+        let name: String = name.into();
+        let cells: Vec<DCell> = vector.into_iter().map(|x| x.into()).collect();
+        let mut dtype = DType::NA;
+        if !cells.is_empty() {
+            dtype = cells[0].dtype();
+        }
+        Series {
+            name: Some(name),
+            cells: cells,
+            dtype: dtype,
+        }
+    }
+
     fn len(&self) -> usize {
         self.cells.len()
     }
@@ -45,6 +58,42 @@ impl SeriesLike for Series {
             true
         }
     }
+
+    fn name(&self) -> Option<&String> {
+        self.name.as_ref()
+    }
+
+    fn set_name<T>(&mut self, name: T) where T: Into<String> {
+        self.name = Some(name.into());
+    }
+
+    fn cells(&self) -> &Vec<DCell> {
+        &self.cells
+    }
+}
+
+impl<T> PartialEq<T> for Series where T: SeriesLike {
+    fn eq(&self, other: &T) -> bool {
+        if self.name() == other.name() && self.len() == other.len() {
+            if self.cells.iter().zip(other.cells().iter()).all(|(ref x1, ref x2)| x1 == x2 ) {
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
+}
+
+impl<T> PartialEq<Vec<T>> for Series where DCell: From<T>, T: Clone {
+    fn eq(&self, other: &Vec<T>) -> bool {
+        if self.cells().iter().zip(other.iter()).all(|(x1, x2)| *x1 == DCell::from(x2.clone())) {
+            true
+        } else {
+            false
+        }
+    }
 }
 
 impl Index<usize> for Series {
@@ -67,6 +116,13 @@ impl ToString for Series {
 impl Typed for Series {
     fn dtype(&self) -> DType {
         self.dtype.clone()
+    }
+}
+
+impl AsType for Series {
+    fn astype(&mut self, dtype: DType) {
+        for cell in &mut self.cells { cell.astype(dtype.clone()) }
+        self.dtype = dtype;
     }
 }
 
@@ -127,6 +183,15 @@ impl MixedSeries {
 }
 
 impl SeriesLike for MixedSeries {
+    fn new<T, U>(name: T, vector: Vec<U>) -> Self where T: Into<String>, U: Into<DCell> + Typed {
+        let name: String = name.into();
+        let cells: Vec<DCell> = vector.into_iter().map(|x| x.into()).collect();
+        MixedSeries {
+            name: Some(name),
+            cells: cells,
+        }
+    }
+
     fn len(&self) -> usize {
         self.cells.len()
     }
@@ -142,6 +207,19 @@ impl SeriesLike for MixedSeries {
 
     fn accepts<T>(&self, _val: &T) -> bool where T: Into<DCell> + Typed {
         true
+    }
+
+    fn name(&self) -> Option<&String> {
+        self.name.as_ref()
+    }
+
+
+    fn set_name<T>(&mut self, name: T) where T: Into<String> {
+        self.name = Some(name.into());
+    }
+
+    fn cells(&self) -> &Vec<DCell> {
+        &self.cells
     }
 }
 
@@ -174,6 +252,12 @@ impl Typed for MixedSeries {
     }
 }
 
+impl AsType for MixedSeries {
+    fn astype(&mut self, dtype: DType) {
+        for cell in &mut self.cells { cell.astype(dtype.clone()) }
+    }
+}
+
 impl<T> From<Vec<T>> for MixedSeries where T: Into<DCell> + Typed {
     fn from(vector: Vec<T>) -> Self {
         let cells: Vec<DCell> = vector.into_iter().map(|x| x.into()).collect();
@@ -184,8 +268,43 @@ impl<T> From<Vec<T>> for MixedSeries where T: Into<DCell> + Typed {
     }
 }
 
+impl<T> PartialEq<T> for MixedSeries where T: SeriesLike {
+    fn eq(&self, other: &T) -> bool {
+        if self.name() == other.name() && self.len() == other.len() {
+            if self.cells.iter().zip(other.cells().iter()).all(|(ref x1, ref x2)| x1 == x2 ) {
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
+}
+
+impl<T> PartialEq<Vec<T>> for MixedSeries where DCell: From<T>, T: Clone {
+    fn eq(&self, other: &Vec<T>) -> bool {
+        if self.cells().iter().zip(other.iter()).all(|(x1, x2)| *x1 == DCell::from(x2.clone())) {
+            true
+        } else {
+            false
+        }
+    }
+}
+
 /// Provide common series functionality.
-pub trait SeriesLike: Debug + ToString + Typed + Index<usize> {
+pub trait SeriesLike: Index<usize> + AsType {
+    /// Constructs a named series initialised with data.
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::prelude::*;
+    /// let series = MixedSeries::new("random chars", vec!['a', 'b', 'c']);
+    /// assert_eq!(series.name(), Some(&"random chars".to_owned()));
+    /// assert_eq!(series[1], DCell::Char('b'));
+    /// ```
+    fn new<T, U>(name: T, vector: Vec<U>) -> Self where T: Into<String>, U: Into<DCell> + Typed;
+
     /// Returns the length of the series.
     ///
     /// # Example
@@ -244,4 +363,58 @@ pub trait SeriesLike: Debug + ToString + Typed + Index<usize> {
     /// assert!(!series.accepts(&true));
     /// ```
     fn accepts<T>(&self, val: &T) -> bool where T: Into<DCell> + Typed;
+
+    /// Gets the name of the series.
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::prelude::*;
+    /// let series = Series::new("My series", vec![1, 2, 3, 4]);
+    /// assert_eq!(series.name(), Some(&"My series".to_owned()));
+    /// ```
+    fn name(&self) -> Option<&String>;
+
+
+    /// Sets the name of the series.
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::prelude::*;
+    /// let mut series = MixedSeries::from(vec![true, false, true]);
+    /// assert_eq!(series.name(), None);
+    ///
+    /// series.set_name("some name");
+    /// assert_eq!(series.name(), Some(&"some name".to_owned()));
+    /// ```
+    fn set_name<T>(&mut self, name: T) where T: Into<String>;
+
+    /// Gets a reference to the internal vector of cells of the series.
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::prelude::*;
+    /// let series = Series::from(vec!["some".to_owned(), "words".to_owned()]);
+    ///
+    /// let expected = vec![DCell::Text("some".to_owned()), DCell::Text("words".to_owned())];
+    /// assert_eq!(series.cells(), &expected);
+    /// ```
+    fn cells(&self) -> &Vec<DCell>;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn equality() {
+        let series = Series::from(vec![0, 1, 2, 3]);
+        let mut mseries = MixedSeries::from(vec![0, 1, 2, 3]);
+        assert!(series == mseries);
+        assert!(series == vec![0, 1, 2, 3]);
+        assert!(mseries == vec![0, 1, 2, 3]);
+
+        mseries.set_name("random");
+        assert!(series != mseries);
+        assert!(mseries == vec![0, 1, 2, 3]);
+    }
 }

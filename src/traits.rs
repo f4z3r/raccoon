@@ -19,45 +19,52 @@ pub trait Typed: Debug + ToString {
     fn dtype(&self) -> DType;
 }
 
-impl Typed for i8 {
-    fn dtype(&self) -> DType { DType::Int }
+/// Convert into another type.
+pub trait AsType: Typed {
+    /// Perform the conversion.
+    ///
+    /// # Examples
+    /// ```
+    /// # use raccoon::prelude::*;
+    /// let mut cell = DCell::from(true);
+    /// assert_eq!(cell, DCell::Bool(true));
+    ///
+    /// cell.astype(DType::Int);
+    /// assert_eq!(cell, DCell::Int(1i64))
+    /// ```
+    ///
+    /// Converting to booleans checks for equality with 0.
+    /// ```
+    /// # use raccoon::prelude::*;
+    /// let mut mseries = MixedSeries::from(vec![1, 0, 0, 5]);
+    /// mseries.push(true);
+    /// mseries.push(6.43);
+    ///
+    /// // perform the conversion
+    /// mseries.astype(DType::Bool);
+    /// let expected = vec![
+    ///     DCell::Bool(true),
+    ///     DCell::Bool(false),
+    ///     DCell::Bool(false),
+    ///     DCell::Bool(true),
+    ///     DCell::Bool(true),
+    ///     DCell::Bool(true)
+    /// ];
+    /// assert_eq!(mseries, expected);
+    /// ```
+    fn astype(&mut self, dtype: DType);
 }
 
-impl Typed for i16 {
-    fn dtype(&self) -> DType { DType::Int }
-}
-
-impl Typed for i32 {
-    fn dtype(&self) -> DType { DType::Int }
-}
-
-impl Typed for i64 {
-    fn dtype(&self) -> DType { DType::Int }
-}
-
-impl Typed for u8 {
-    fn dtype(&self) -> DType { DType::UInt }
-}
-
-impl Typed for u16 {
-    fn dtype(&self) -> DType { DType::UInt }
-}
-
-impl Typed for u32 {
-    fn dtype(&self) -> DType { DType::UInt }
-}
-
-impl Typed for u64 {
-    fn dtype(&self) -> DType { DType::UInt }
-}
-
-impl Typed for f32 {
-    fn dtype(&self) -> DType { DType::Float }
-}
-
-impl Typed for f64 {
-    fn dtype(&self) -> DType { DType::Float }
-}
+typed_trait_for_int!(i8);
+typed_trait_for_int!(i16);
+typed_trait_for_int!(i32);
+typed_trait_for_int!(i64);
+typed_trait_for_uint!(u8);
+typed_trait_for_uint!(u16);
+typed_trait_for_uint!(u32);
+typed_trait_for_uint!(u64);
+typed_trait_for_float!(f32);
+typed_trait_for_float!(f64);
 
 impl Typed for bool {
     fn dtype(&self) -> DType { DType::Bool }
