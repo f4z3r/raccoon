@@ -12,4 +12,4 @@ pub mod series;
 pub mod traits;
 pub mod error;
 pub mod prelude;
-
+mod utils;

@@ -426,6 +426,39 @@ pub enum DType {
     Mixed
 }
 
+impl DType {
+    /// Checks equality between types.
+    ///
+    /// Note that this is different to the `PartialEq` trait since, for instance, all types have the same type as
+    /// `DType::NA`. This comes from the fact, that `DCell::NA` represents a missing entry, no matter what type the
+    /// entry is.
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::prelude::*;
+    /// assert!(DType::Float.equals(&DType::Float));
+    /// assert!(!DType::Float.equals(&DType::Int));
+    /// assert!(DType::Float.equals(&DType::NA));
+    ///
+    /// // mixed does not behave like NA
+    /// assert!(!DType::Float.equals(&DType::Mixed));
+    /// ```
+    pub fn equals(&self, other: &DType) -> bool {
+        match (self, other) {
+            (DType::Int,   DType::Int)      => true,
+            (DType::UInt,  DType::UInt)     => true,
+            (DType::Float, DType::Float)    => true,
+            (DType::Char,  DType::Char)     => true,
+            (DType::Bool,  DType::Bool)     => true,
+            (DType::Text,  DType::Text)     => true,
+            (DType::Mixed, DType::Mixed)    => true,
+            (_,            DType::NA)       => true,
+            (DType::NA,    _)               => true,
+            _                               => false,
+        }
+    }
+}
+
 impl ToString for DType {
     fn to_string(&self) -> String {
         match self {
@@ -477,5 +510,25 @@ impl AsType for DType {
             (DType::Char, DType::Text)      => DType::Text,
             _                               => DType::NA
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dtype_equality() {
+        assert!(DType::Int.equals(&DType::Int));
+        assert!(DType::Int.equals(&DType::NA));
+        assert!(DType::NA.equals(&DType::Int));
+        assert!(!DType::Text.equals(&DType::Int));
+        assert!(!DType::Float.equals(&DType::Bool));
+        assert!(DType::Char.equals(&DType::Char));
+        assert!(DType::NA.equals(&DType::Float));
+        assert!(DType::NA.equals(&DType::NA));
+        assert!(!DType::Mixed.equals(&DType::Bool));
+        assert!(DType::Mixed.equals(&DType::NA));
+        assert!(DType::Mixed.equals(&DType::Mixed));
     }
 }

@@ -13,6 +13,8 @@ pub enum RaccoonError {
     InvalidType,
     /// Conversion error.
     ConversionError,
+    ///Mixed type error.
+    MixedTypeError,
 }
 
 impl fmt::Display for RaccoonError {
@@ -20,6 +22,7 @@ impl fmt::Display for RaccoonError {
         match self {
             RaccoonError::InvalidType       => write!(f, "invalid type provided"),
             RaccoonError::ConversionError   => write!(f, "error converting types"),
+            RaccoonError::MixedTypeError    => write!(f, "mixed types are not allowed"),
         }
     }
 }
@@ -30,6 +33,7 @@ impl Error for RaccoonError {
         match self {
             RaccoonError::InvalidType       => "invalid type provided",
             RaccoonError::ConversionError   => "error converting types",
+            RaccoonError::MixedTypeError    => "mixed types are not allowed",
         }
     }
 }

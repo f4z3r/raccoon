@@ -35,6 +35,8 @@ macro_rules! typed_trait_for_int {
         impl Typed for $type {
             fn dtype(&self) -> DType { DType::Int }
         }
+
+        impl Primitive for $type {}
     }
 }
 
@@ -43,6 +45,8 @@ macro_rules! typed_trait_for_uint {
         impl Typed for $type {
             fn dtype(&self) -> DType { DType::UInt }
         }
+
+        impl Primitive for $type {}
     }
 }
 
@@ -51,5 +55,7 @@ macro_rules! typed_trait_for_float {
         impl Typed for $type {
             fn dtype(&self) -> DType { DType::Float }
         }
+
+        impl Primitive for $type {}
     }
 }

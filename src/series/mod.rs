@@ -1,6 +1,7 @@
 //! Series module
 
 use prelude::*;
+use utils;
 
 use std::ops::{Index, IndexMut};
 
@@ -18,14 +19,63 @@ pub struct Series {
     dtype: DType,
 }
 
-
-impl SeriesLike for Series {
-    fn new<T, U>(name: T, vector: Vec<U>) -> Self where T: Into<String>, U: Into<DCell> + Typed {
+impl Series {
+    /// Constructs a named series intialised with data.
+    ///
+    /// This can return an error if the data passed is not conform to the series type.
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::prelude::*;
+    /// let vector = vec![
+    ///     DCell::Int(-213i64),
+    ///     DCell::NA,
+    ///     DCell::Bool(true),
+    ///     DCell::Text("some text".to_owned())
+    /// ];
+    /// // may fail for mismatched types
+    /// let result = Series::new_typed("my typed series", vector);
+    /// assert!(result.is_err());
+    ///
+    /// // but can be useful to initiate `Series` with NA values
+    /// let vector = vec![
+    ///     DCell::Int(-213i64),
+    ///     DCell::NA,
+    ///     DCell::Int(-456i64),
+    ///     DCell::Int(905_843i64)
+    /// ];
+    /// let result = Series::new_typed("my other typed series", vector.clone());
+    /// assert!(result.is_ok());
+    ///
+    /// let series = result.unwrap();
+    /// assert_eq!(series, vector);
+    /// ```
+    pub fn new_typed<T, U>(name: T, vector: Vec<U>) -> Result<Self, RaccoonError>
+        where
+            T: Into<String>,
+            U: Into<DCell> + Typed
+    {
         let name: String = name.into();
         let cells: Vec<DCell> = vector.into_iter().map(|x| x.into()).collect();
-        let mut dtype = DType::NA;
-        if !cells.is_empty() {
-            dtype = cells[0].dtype();
+        let dtype = utils::vec_dtype(&cells);
+        if dtype == DType::Mixed {
+            return Err(RaccoonError::MixedTypeError);
+        }
+        Ok(Series {
+            name: Some(name),
+            cells: cells,
+            dtype: dtype,
+        })
+    }
+}
+
+impl SeriesLike for Series {
+    fn new<T, U>(name: T, vector: Vec<U>) -> Self where T: Into<String>, U: Into<DCell> + Primitive {
+        let name: String = name.into();
+        let cells: Vec<DCell> = vector.into_iter().map(|x| x.into()).collect();
+        let dtype = utils::vec_dtype(&cells);
+        if dtype == DType::Mixed {
+            panic!("mixed type in type checked series");
         }
         Series {
             name: Some(name),
@@ -126,7 +176,7 @@ impl AsType for Series {
     }
 }
 
-impl<T> From<Vec<T>> for Series where T: Into<DCell> + Typed {
+impl<T> From<Vec<T>> for Series where T: Into<DCell> + Primitive {
     fn from(vector: Vec<T>) -> Self {
         let cells: Vec<DCell> = vector.into_iter().map(|x| x.into()).collect();
         let mut dtype = DType::NA;
@@ -153,6 +203,35 @@ pub struct MixedSeries {
 }
 
 impl MixedSeries {
+    /// Constructs a named series intialised with data.
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::prelude::*;
+    /// let vector = vec![
+    ///     DCell::Int(-213i64),
+    ///     DCell::NA,
+    ///     DCell::Bool(true),
+    ///     DCell::Text("some text".to_owned())
+    /// ];
+    /// // may fail for mismatched types
+    /// let mseries = MixedSeries::new_typed("my typed series", vector.clone());
+    ///
+    /// assert_eq!(mseries, vector);
+    /// ```
+    pub fn new_typed<T, U>(name: T, vector: Vec<U>) -> Self
+        where
+            T: Into<String>,
+            U: Into<DCell> + Typed
+    {
+        let name: String = name.into();
+        let cells: Vec<DCell> = vector.into_iter().map(|x| x.into()).collect();
+        MixedSeries {
+            name: Some(name),
+            cells: cells,
+        }
+    }
+
     /// Same as [`push()`](./trait.SeriesLike.html#tymethod.push) from [`SeriesLike`](./trait.SeriesLike.html) but
     /// without returing a `RaccoonResult` as the function cannot fail.
     ///
@@ -183,7 +262,7 @@ impl MixedSeries {
 }
 
 impl SeriesLike for MixedSeries {
-    fn new<T, U>(name: T, vector: Vec<U>) -> Self where T: Into<String>, U: Into<DCell> + Typed {
+    fn new<T, U>(name: T, vector: Vec<U>) -> Self where T: Into<String>, U: Into<DCell> + Primitive {
         let name: String = name.into();
         let cells: Vec<DCell> = vector.into_iter().map(|x| x.into()).collect();
         MixedSeries {
@@ -303,7 +382,7 @@ pub trait SeriesLike: Index<usize> + AsType {
     /// assert_eq!(series.name(), Some(&"random chars".to_owned()));
     /// assert_eq!(series[1], DCell::Char('b'));
     /// ```
-    fn new<T, U>(name: T, vector: Vec<U>) -> Self where T: Into<String>, U: Into<DCell> + Typed;
+    fn new<T, U>(name: T, vector: Vec<U>) -> Self where T: Into<String>, U: Into<DCell> + Primitive;
 
     /// Returns the length of the series.
     ///

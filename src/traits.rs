@@ -55,6 +55,9 @@ pub trait AsType: Typed {
     fn astype(&mut self, dtype: DType);
 }
 
+/// Trait implemented by all primitive data values.
+pub trait Primitive: Typed {}
+
 typed_trait_for_int!(i8);
 typed_trait_for_int!(i16);
 typed_trait_for_int!(i32);
@@ -70,10 +73,16 @@ impl Typed for bool {
     fn dtype(&self) -> DType { DType::Bool }
 }
 
+impl Primitive for bool {}
+
 impl Typed for char {
     fn dtype(&self) -> DType { DType::Char }
 }
 
+impl Primitive for char {}
+
 impl Typed for String {
     fn dtype(&self) -> DType { DType::Text }
 }
+
+impl Primitive for String {}
