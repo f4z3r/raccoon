@@ -1,4 +1,95 @@
-//! Series module
+//! Collection of growable, vector-like, named series.
+//!
+//! # Type Checking
+//! [`Series`](./struct.Series.html) objects perform strict type checking on their contents. This is useful when type
+//! safety and correctness of the data must be ensured. A `Series` object can only contain a single data type
+//! ([`DType`](../cell/enum.DType.html)) and no other. Hence it ensures that all appended data is in the correct
+//! format.
+//!
+//! On the other hand, [`MixedSeries`](./struct.MixedSeries.html) can contain varying data types. This is useful when
+//! flexibility is required.
+//!
+//! # Examples
+//! Create a named series.
+//! ```
+//! use raccoon::prelude::*;
+//!
+//! // create integer series
+//! let mut series = Series::new("series1", vec![1, 2, 3, 4]);
+//!
+//! // can push other integers or NA values
+//! let result = series.push(-74);
+//! assert!(result.is_ok());
+//! let result = series.push_cell(DCell::NA);
+//! assert!(result.is_ok());
+//!
+//! // but cannot push other types
+//! let result = series.push(true);
+//! assert!(result.is_err());
+//! ```
+//!
+//! `Series` can be indexed to retrieve values, but one cannot use indexed values mutably for type safety reasons.
+//! ```
+//! use raccoon::prelude::*;
+//!
+//! let series = Series::new("bool series", vec![true, false, true, true]);
+//! if let DCell::Bool(b) = series[2] {
+//!     println!("Third entry is true!");
+//! } else {
+//!     println!("Third entry is not true ...");
+//! }
+//! ```
+//!
+//! Or create a series without strict type checking where everything can be pushed to:
+//! ```
+//! use raccoon::prelude::*;
+//!
+//! let mut mseries = MixedSeries::new("series1", vec![1, 2, 3, 4]);
+//!
+//! // you can push other types
+//! let result = mseries.push(true);
+//! assert!(result.is_ok());
+//!
+//! // or use `force_push()` to not receive a result
+//! mseries.force_push('c');
+//!
+//! assert_eq!(mseries[4], DCell::Bool(true));
+//! assert_eq!(mseries[5], DCell::Char('c'));
+//!
+//! // you can also change values using indexes
+//! mseries[5] = DCell::Float(123.345f64);
+//! assert_eq!(mseries[5], DCell::Float(123.345f64));
+//! ```
+//!
+//! Conversions between `Series` and `MixedSeries` can be performed using `from()` in both directions. Note that when
+//! converting a `MixedSeries` into a `Series` using `from()`, the data type is autmatically changed to `DType::Text`
+//! to ensure no data loss occurs while still keeping a single data type.
+//! ```
+//! use raccoon::prelude::*;
+//!
+//! let vector = vec![
+//!     DCell::Int(-213i64),
+//!     DCell::NA,
+//!     DCell::Bool(true),
+//!     DCell::Text("some text".to_owned())
+//! ];
+//! let mseries = MixedSeries::new_typed("mixed series", vector);
+//!
+//! // perform the conversion
+//! let series = Series::from(mseries);
+//!
+//! // everything is text now
+//! assert_eq!(series.dtype(), DType::Text);
+//! assert_eq!(series[2], DCell::Text("true".to_owned()));
+//!
+//! // attention! the name is kept which might be misleading
+//! assert_eq!(series.name(), Some(&"mixed series".to_owned()));
+//! ```
+//!
+//! Moreover, a `MixedSeries` can be converted into a `Series` of a speicific data type by using
+//! [`from_mixed()`](./struct.Series.html#method.from_mixed).
+
+
 
 use prelude::*;
 use utils;
@@ -66,6 +157,47 @@ impl Series {
             cells: cells,
             dtype: dtype,
         })
+    }
+
+    /// Converts a `MixedSeries` into a `Series` of the desired `DType`.
+    ///
+    /// # Note
+    /// This conversion might return a `Series` filled with `DCell::NA` values if the conversion is not appropriate.
+    /// Moreover, this function panics if `DType::Mixed` is passed as an argument.
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::prelude::*;
+    /// let vector = vec![
+    ///     DCell::NA,
+    ///     DCell::Int(-34i64),
+    ///     DCell::Bool(true),
+    ///     DCell::Text("543.645".to_owned()),
+    ///     DCell::Char('z'),
+    ///     DCell::UInt(90_321u64)
+    /// ];
+    /// let mseries = MixedSeries::new_typed("mixed series", vector);
+    ///
+    /// // perform the conversion
+    /// let series = Series::from_mixed(mseries, DType::Float);
+    ///
+    /// let expected = vec![
+    ///     DCell::NA,
+    ///     DCell::Float(-34f64),
+    ///     DCell::Float(1f64),
+    ///     DCell::Float(543.645f64),
+    ///     DCell::NA,
+    ///     DCell::Float(90_321f64)
+    /// ];
+    /// assert_eq!(series, expected);
+    /// ```
+    pub fn from_mixed(mut series: MixedSeries, dtype: DType) -> Self {
+        series.astype(dtype.clone());
+        Series {
+            name: series.name().map_or(None, |x| Some(x.to_owned())),
+            cells: series.cells().clone(),
+            dtype: dtype
+        }
     }
 }
 
@@ -187,6 +319,17 @@ impl<T> From<Vec<T>> for Series where T: Into<DCell> + Primitive {
             name: None,
             cells: cells,
             dtype: dtype
+        }
+    }
+}
+
+impl From<MixedSeries> for Series {
+    fn from(mut series: MixedSeries) -> Self {
+        series.astype(DType::Text);
+        Series {
+            name: series.name().map_or(None, |x| Some(x.to_owned())),
+            cells: series.cells().clone(),
+            dtype: DType::Text
         }
     }
 }
@@ -343,6 +486,15 @@ impl<T> From<Vec<T>> for MixedSeries where T: Into<DCell> + Typed {
         MixedSeries {
             name: None,
             cells: cells,
+        }
+    }
+}
+
+impl From<Series> for MixedSeries {
+    fn from(series: Series) -> Self {
+        MixedSeries {
+            name: series.name().map_or(None, |x| Some(x.to_owned())),
+            cells: series.cells().clone()
         }
     }
 }

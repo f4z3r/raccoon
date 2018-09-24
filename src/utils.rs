@@ -21,9 +21,9 @@ pub fn vec_dtype(vector: &Vec<DCell>) -> DType {
     let mut result = DType::NA;
     for cell in vector {
         let cell_type = cell.dtype();
-        if cell_type != result && result != DType::NA && cell_type != DType::NA {
+        if cell_type != result && !result.is_nan() && !cell_type.is_nan() {
             return DType::Mixed;
-        } else if cell_type != result && result == DType::NA {
+        } else if cell_type != result && result.is_nan() {
             result = cell_type;
         }
     }

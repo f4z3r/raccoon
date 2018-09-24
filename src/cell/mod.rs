@@ -1,4 +1,9 @@
-//! A data cell supporting extended operations (see [examples](./enum.DCell.html)).
+//! A data cell supporting extended operations.
+//!
+//! See [examples](./enum.DCell.html) for more information on the supported operations.
+//!
+//! A `DCell` on its own is not very useful. It usefulness is shown in conjunction with
+//! [`SeriesLike`](../series/trait.SeriesLike.html) objects.
 
 use prelude::*;
 
@@ -427,6 +432,24 @@ pub enum DType {
 }
 
 impl DType {
+    /// Determine if the `DType` is equal to `DType::NA`
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::prelude::*;
+    /// let mut dtype = DType::NA;
+    /// assert!(dtype.is_nan());
+    ///
+    /// dtype = DType::Char;
+    /// assert!(!dtype.is_nan());
+    /// ```
+    pub fn is_nan(&self) -> bool {
+        match self {
+            DType::NA   => true,
+            _           => false
+        }
+    }
+
     /// Checks equality between types.
     ///
     /// Note that this is different to the `PartialEq` trait since, for instance, all types have the same type as
