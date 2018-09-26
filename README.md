@@ -1,4 +1,4 @@
-# raccoon [![Build Status](https://travis-ci.com/jakobbeckmann/raccoon.svg?token=6RwG9cGf5RW9JwThwdpc&branch=master)](https://travis-ci.com/jakobbeckmann/raccoon)
+# raccoon [![Build Status](https://travis-ci.com/jakobbeckmann/raccoon.svg?token=6RwG9cGf5RW9JwThwdpc&branch=master)](https://travis-ci.com/jakobbeckmann/raccoon) [![Version Badge](http://meritbadge.herokuapp.com/raccoon)](https://crates.io/crates/raccoon)
 A library providing similar capabilities to `pandas`'s `DataFrame` in python. The intent of this library is to facilitate the handling of large amounts of data.
 
 ## Documentation
