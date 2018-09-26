@@ -216,6 +216,15 @@ impl SeriesLike for Series {
         }
     }
 
+    fn new_empty<T>(name: T, dtype: DType) -> Self where T: Into<String> {
+        let name: String = name.into();
+        Series {
+            name: Some(name),
+            cells: Vec::new(),
+            dtype: dtype,
+        }
+    }
+
     fn len(&self) -> usize {
         self.cells.len()
     }
@@ -414,6 +423,14 @@ impl SeriesLike for MixedSeries {
         }
     }
 
+    fn new_empty<T>(name: T, _dtype: DType) -> Self where T: Into<String> {
+        let name: String = name.into();
+        MixedSeries {
+            name: Some(name),
+            cells: Vec::new(),
+        }
+    }
+
     fn len(&self) -> usize {
         self.cells.len()
     }
@@ -535,6 +552,29 @@ pub trait SeriesLike: Index<usize> + AsType {
     /// assert_eq!(series[1], DCell::Char('b'));
     /// ```
     fn new<T, U>(name: T, vector: Vec<U>) -> Self where T: Into<String>, U: Into<DCell> + Primitive;
+
+    /// Constructs an empty named series.
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::prelude::*;
+    /// let series = Series::new_empty("some name", DType::UInt);
+    /// assert!(series.is_empty());
+    /// assert_eq!(series.dtype(), DType::UInt);
+    /// ```
+    fn new_empty<T>(name: T, dtype: DType) -> Self where T: Into<String>;
+
+    /// Checks if the series is empty.
+    ///
+    /// # Example
+    /// ```
+    /// # use raccoon::prelude::*;
+    /// let series = Series::new_empty("some name", DType::UInt);
+    /// assert!(series.is_empty());
+    /// ```
+    fn is_empty(&self) -> bool {
+        self.cells().is_empty()
+    }
 
     /// Returns the length of the series.
     ///
